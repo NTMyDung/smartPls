@@ -12,6 +12,9 @@ def create_app() -> Flask:
     CORS(app, resources={r"/api/*": {"origins": "*"}})
 
     MAX_FILE_SIZE_MB = 50
+    @app.route('/')
+    def home():
+        return "Hello, SmartPLS!"
 
     @app.get("/api/health")
     def health() -> Any:
@@ -105,4 +108,6 @@ def create_app() -> Flask:
     return app
 
 
-app = create_app()
+if __name__ == "__main__":
+    app = create_app()
+    app.run(host="0.0.0.0", port=5000, debug=True)
