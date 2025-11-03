@@ -9,7 +9,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import pandas as pd
 
-# if __name__ == "__main__":
+if __name__ == "__main__":
    
     # Load data
     data = pd.read_csv("backend/app/Data_280.csv", index_col=0)

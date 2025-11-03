@@ -26,4 +26,4 @@ COPY backend /app
 EXPOSE 5000
 
 # Dòng khởi chạy container khi bắt đầu
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "app.main:app", "--workers=2", "--threads=4"]
+CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:app", "--workers=2", "--threads=4"]
