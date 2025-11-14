@@ -1,0 +1,307 @@
+/* Container chính */
+.step-navigation-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  gap: 20px;
+}
+
+/* Step dropdown wrapper */
+.step-dropdown-wrapper {
+  position: relative;
+  flex: 1;
+}
+
+/* Step button */
+.step-button {
+  padding: 10px 20px;
+  background-color: #e5e7eb;
+  color: black;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  width: 100%;
+  text-align: left;
+}
+
+.step-button.active {
+  background-color: #1e40af;
+  color: white;
+}
+
+/* Dropdown menu */
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 8px;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* Dropdown item */
+.dropdown-item {
+  padding: 10px 15px;
+  cursor: pointer;
+  background-color: white;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background-color 0.2s;
+}
+
+.dropdown-item:hover:not(.selected) {
+  background-color: #f5f5f5;
+}
+
+.dropdown-item.selected {
+  background-color: #e3f2fd;
+}
+
+/* Arrow between steps */
+.step-arrow {
+  color: #999;
+  font-size: 20px;
+}
+
+/* Buttons container */
+.button-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Add button */
+.btn-add {
+  padding: 7px 15px;
+  background-color: white;
+  border: 2px solid #1e40af;
+  color: #1e40af;
+  border-radius: 6px;
+  cursor: "pointer";
+  font-size: 13px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.btn-add:hover {
+  background-color: #f0f0f0;
+}
+
+/* Cancel button */
+.btn-cancel {
+  padding: 10px 15px;
+  background-color: #f59e0b;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.btn-cancel:hover {
+  background-color: #d97706;
+}
+
+/* Clear all button */
+.btn-clear {
+  padding: 8px 12px;
+  background-color: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.btn-clear:hover {
+  background-color: #cc0000;
+}
+
+/* Pairs list container */
+.pairs-container {
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  border: 1px solid #e0e0e0;
+}
+
+.pairs-container h4 {
+  margin: 0 0 15px 0;
+}
+
+.pairs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Pair item */
+.pair-item {
+  padding: 12px;
+  background-color: white;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.pair-item.editing {
+  background-color: #fffbea;
+  border: 2px solid #f59e0b;
+}
+
+.pair-number {
+  font-weight: 500;
+  color: #666;
+}
+
+.pair-content {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex: 1;
+}
+
+.pair-variables {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+/* Variable tag */
+.variable-tag {
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: white;
+}
+
+.variable-tag.independent {
+  background-color: #1e40af;
+}
+
+.variable-tag.dependent {
+  background-color: #059669;
+}
+
+/* Pair buttons */
+.pair-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-edit {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.btn-edit:hover {
+  background-color: #1d4ed8;
+}
+
+.btn-remove {
+  background-color: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.btn-remove:hover {
+  background-color: #cc0000;
+}
+
+/* Current selection container */
+.current-selection-container {
+  padding: 15px;
+  background-color: #f0f8ff;
+  border-radius: 6px;
+  border: 1px solid #b0d4ff;
+}
+
+.current-selection-container h4 {
+  margin: 0 0 10px 0;
+}
+
+.current-selection-content {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.current-variables {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+/* Selected variable tag */
+.selected-variable {
+  background-color: #1e40af;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.selected-variable.dependent {
+  background-color: #059669;
+}
+
+.selected-variable button {
+  background-color: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+}
+
+/* Empty state message */
+.dropdown-empty {
+  padding: 10px 15px;
+  color: #999;
+}
+
+/* Checkbox and radio styling */
+input[type="checkbox"],
+input[type="radio"] {
+  cursor: pointer;
+}
