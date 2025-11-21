@@ -1,4 +1,4 @@
-import numpy as np, pandas as pd, scipy.linalg as linalg, plspm.util as util
+import numpy as np, pandas as pd, scipy.linalg as linalg, app.plspm.util as util
 from enum import Enum
 from typing import Tuple
 

@@ -146,7 +146,7 @@ class TopoSort:
         ordered = []
         orphaned = c.deque([v for v in self.__indegree if self.__indegree[v] == 0])
         while orphaned:
-            vertex = orphaned.pop()
+            vertex = orphaned.popleft()  # FIFO: lấy phần tử đầu tiên (Kahn's algorithm chuẩn)
             ordered.append(vertex)
             for child in self.__children[vertex]:
                 self.__indegree[child] -= 1

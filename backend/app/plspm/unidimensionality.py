@@ -1,7 +1,7 @@
-import pandas as pd, numpy as np, plspm.util as util
+import pandas as pd, numpy as np, app.plspm.util as util
 from sklearn.decomposition import PCA
-from plspm.config import Config
-from plspm.mode import Mode
+from app.plspm.config import Config
+from app.plspm.mode import Mode
 
 class Unidimensionality:
     """

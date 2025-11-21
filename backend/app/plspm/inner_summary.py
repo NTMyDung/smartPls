@@ -1,6 +1,6 @@
 import pandas as pd, numpy as np, math
-from plspm.config import Config
-from plspm.mode import Mode
+from app.plspm.config import Config
+from app.plspm.mode import Mode
 
 
 class InnerSummary:

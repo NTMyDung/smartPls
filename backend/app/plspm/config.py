@@ -1,7 +1,8 @@
-import pandas as pd, numpy as np, numpy.testing as npt, plspm.util as util, itertools as it, collections as c
-from plspm.util import TopoSort
-from plspm.mode import Mode
-from plspm.scale import Scale
+import pandas as pd, numpy as np, numpy.testing as npt, itertools as it, collections as c
+from app.plspm.util import TopoSort
+from app.plspm.mode import Mode
+from app.plspm.scale import Scale
+from app.plspm import util
 
 
 class Structure:

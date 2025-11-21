@@ -1,10 +1,10 @@
-import plspm.inner_summary as pis, plspm.config as c
+import app.plspm.inner_summary as pis, app.plspm.config as c
 import itertools
-import pandas as pd, numpy as np, plspm.weights as w, plspm.outer_model as om, plspm.inner_model as im
-from plspm.scheme import Scheme
-from plspm.unidimensionality import Unidimensionality
-from plspm.bootstrap import Bootstrap
-from plspm.estimator import Estimator
+import pandas as pd, numpy as np, app.plspm.weights as w, app.plspm.outer_model as om, app.plspm.inner_model as im
+from app.plspm.scheme import Scheme
+from app.plspm.unidimensionality import Unidimensionality
+from app.plspm.bootstrap import Bootstrap
+from app.plspm.estimator import Estimator
 import matplotlib.patches as patches
 
 

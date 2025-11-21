@@ -1,8 +1,8 @@
-import plspm.config as c, pandas as pd, numpy as np, plspm.inner_model as im, plspm.outer_model as om, time
+import app.plspm.config as c, pandas as pd, numpy as np, app.plspm.inner_model as im, app.plspm.outer_model as om, time
 from multiprocessing import Process, Queue
 from queue import Empty
-from plspm.weights import WeightsCalculatorFactory
-from plspm.estimator import Estimator
+from app.plspm.weights import WeightsCalculatorFactory
+from app.plspm.estimator import Estimator
 
 def _create_summary(data: pd.DataFrame, original):
     # Hàm tổng hợp kết quả bootstrap cho từng chỉ số (weight, loading, path, ...)

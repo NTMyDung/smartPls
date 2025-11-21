@@ -1,7 +1,7 @@
 
-import plspm.config as c, pandas as pd, numpy.testing as npt
-from plspm.weights import WeightsCalculatorFactory
-from plspm.scale import Scale
+import app.plspm.config as c, pandas as pd, numpy.testing as npt
+from app.plspm.weights import WeightsCalculatorFactory
+from app.plspm.scale import Scale
 from typing import Tuple
 
 

@@ -1,3 +1,5 @@
+
+// Component cho biến 
 export default function Variable({ variables }) {
   return (
     <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", textAlign: "center"}}>

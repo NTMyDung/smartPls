@@ -1,7 +1,7 @@
-import numpy as np, pandas as pd, plspm.config as c, statsmodels.api as sm, plspm.util as util, math
+import numpy as np, pandas as pd, app.plspm.config as c, statsmodels.api as sm, app.plspm.util as util, math
 from typing import Tuple
-from plspm.scheme import Scheme
-from plspm.mode import Mode
+from app.plspm.scheme import Scheme
+from app.plspm.mode import Mode
 
 pd.options.mode.chained_assignment = None  # default='warn'
 

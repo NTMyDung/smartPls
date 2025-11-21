@@ -1,25 +1,43 @@
 import { useState, useRef, useEffect } from "react";
 import "./StepNavigation.css";
 
-export default function StepNavigation({ variables = [] }) {
+// Component: StepNavigation
+// Mục đích: Cho phép người dùng chọn các biến độc lập (independent)
+// và biến phụ thuộc (dependent), tạo các cặp (independent -> dependent),
+// chỉnh sửa / xóa / xóa toàn bộ các cặp, và báo lại danh sách cặp cho cha thông qua `onPairsChange`.
+// - variables: mảng các tiền tố biến (VD: ['VIA','PEE',...]) được rút ra từ file CSV
+// - onPairsChange: callback nhận danh sách các cặp hiện có (gọi mỗi khi pairs thay đổi)
+
+export default function StepNavigation({ variables = [], onPairsChange }) {
   const [pairs, setPairs] = useState([]);
+  // pairs: danh sách các cặp đã lưu, mỗi cặp: { id, independent: [vars], dependent }
+
   const [currentIndependent, setCurrentIndependent] = useState([]);
+  // currentIndependent: các biến độc lập đang được chọn trong đợt hiện tại
+
   const [currentDependent, setCurrentDependent] = useState(null);
+  // currentDependent: biến phụ thuộc đang được chọn trong đợt hiện tại
+
   const [showIndependentDropdown, setShowIndependentDropdown] = useState(false);
   const [showDependentDropdown, setShowDependentDropdown] = useState(false);
+  //Dropdown để chọn các biến, sẽ có ràng buộc quan hệ giữa nó
+
   const [activeStep, setActiveStep] = useState(0);
   const [editingId, setEditingId] = useState(null);
+  // editingId: id của cặp đang chỉnh sửa (nếu có)
+
   const [showConfirmClear, setShowConfirmClear] = useState(false);
+  //Popup xác nhận xóa tất cả cặp biến
   
   const dropdownRefIndependent = useRef(null);
   const dropdownRefDependent = useRef(null);
 
-  // Lọc các biến cho dropdown phụ thuộc (chỉ loại trừ biến độc lập trong cơn chọn hiện tại)
+  // Lọc các biến cho dropdown phụ thuộc (Loại trừ biến độc lập trong đợt chọn hiện tại)
   const availableDependentVars = variables.filter(
     (v) => !currentIndependent.includes(v)
   );
 
-  // Lọc các biến cho dropdown độc lập (chỉ loại trừ biến phụ thuộc trong cơn chọn hiện tại)
+  // Lọc các biến cho dropdown độc lập (Loại trừ biến phụ thuộc trong đợt chọn hiện tại)
   const availableIndependentVars = variables.filter(
     (v) => v !== currentDependent
   );
@@ -39,6 +57,14 @@ export default function StepNavigation({ variables = [] }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Gọi callback khi pairs thay đổi
+  useEffect(() => {
+    if (onPairsChange) {
+      onPairsChange(pairs);
+    }
+  }, [pairs, onPairsChange]);
+
+  //Cập nhật vào current bộ đã chọn
   const handleSelectIndependent = (variable) => {
     if (currentIndependent.includes(variable)) {
       setCurrentIndependent(currentIndependent.filter((v) => v !== variable));
@@ -51,6 +77,7 @@ export default function StepNavigation({ variables = [] }) {
     setCurrentDependent(currentDependent === variable ? null : variable);
   };
 
+  //Thao tác thêm/cập nhật/xóa các cặp đang thêm
   const handleAddPair = () => {
     // Kiểm tra điều kiện: biến độc lập không được là biến phụ thuộc
     if (currentIndependent.includes(currentDependent)) {
@@ -76,6 +103,8 @@ export default function StepNavigation({ variables = [] }) {
         };
         setPairs([...pairs, newPair]);
       }
+
+      //Reset state sau khi thêm/cập nhật
       setCurrentIndependent([]);
       setCurrentDependent(null);
       setShowIndependentDropdown(false);
@@ -85,18 +114,21 @@ export default function StepNavigation({ variables = [] }) {
     }
   };
 
+  //Cập nhật cặp đã thêm
   const handleEditPair = (pair) => {
     setEditingId(pair.id);
     setCurrentIndependent([...pair.independent]);
     setCurrentDependent(pair.dependent);
   };
 
+  //Hủy cập nhật cặp đã thêm
   const handleCancelEdit = () => {
     setEditingId(null);
     setCurrentIndependent([]);
     setCurrentDependent(null);
   };
 
+  //Xóa phần tử đã thêm
   const handleRemovePair = (id) => {
     setPairs(pairs.filter(p => p.id !== id));
     if (editingId === id) {
@@ -104,6 +136,7 @@ export default function StepNavigation({ variables = [] }) {
     }
   };
 
+  // Xóa tất cả cặp đã thêm, gọi popup xác nhận hàm ở trên
   const handleClearAll = () => {
     setPairs([]);
     setCurrentIndependent([]);

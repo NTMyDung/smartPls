@@ -1,4 +1,4 @@
-import statsmodels.api as sm, numpy as np, pandas as pd, plspm.util as util
+import statsmodels.api as sm, numpy as np, pandas as pd, app.plspm.util as util
 from enum import Enum
 
 
