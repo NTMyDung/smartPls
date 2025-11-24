@@ -24,13 +24,25 @@ export default function LVDraggable({ lv, baseX, baseY, onDrag }) {
       <circle cx={baseX} cy={baseY} r={50} fill="#1E3A8A" />
       <text
         x={baseX}
-        y={baseY + 7}
+        y={baseY}
         textAnchor="middle"
         fill="white"
         fontWeight="bold"
       >
         {lv.label}
       </text>
+      {/* R-Square nếu có */}
+      {lv.rSquare !== 0 && (
+        <text
+          x={baseX}
+          y={baseY + 28}
+          textAnchor="middle"
+          fill="white"
+          fontSize="13"
+        >
+          R² = {lv.rSquare}
+        </text>
+      )}
     </g>
   );
 }

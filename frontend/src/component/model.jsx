@@ -1,55 +1,56 @@
 import React, { useState, useEffect } from "react";
 import LVGroup from "./LVGroup.jsx";
 
-export default function SmartPLSDiagram({ data = null }) {
+export default function SmartPLSDiagram({ data }) {
   const mockData = {
     latentVariables: [
       { id: "GSA", label: "GSA", level: 1 },
       { id: "MA", label: "MA", level: 1 },
       { id: "VA", label: "VA", level: 1 },
-      { id: "PE", label: "PE", level: 2.1 },
-      { id: "FE", label: "FE", level: 2.2 },
-      { id: "CE", label: "CE", level: 3 },
+      { id: "PE", label: "PE", level: 2.1, rSquare: 0.712 },
+      { id: "FE", label: "FE", level: 2.2, rSquare: 0.681 },
+      { id: "CE", label: "CE", level: 3, rSquare: 0.744 },
     ],
     manifestVariables: {
       GSA: [
-        { id: "GSA4", label: "GSA4" },
-        { id: "GSA3", label: "GSA3" },
-        { id: "GSA2", label: "GSA2" },
-        { id: "GSA1", label: "GSA1" },
+        { id: "GSA4", label: "GSA4", loading: 0.813 },
+        { id: "GSA3", label: "GSA3", loading: 0.773 },
+        { id: "GSA2", label: "GSA2", loading: 0.731 },
+        { id: "GSA1", label: "GSA1", loading: 0.692 },
       ],
+
       MA: [
-        { id: "MA5", label: "MA5" },
-        { id: "MA4", label: "MA4" },
-        { id: "MA3", label: "MA3" },
-        { id: "MA2", label: "MA2" },
-        { id: "MA1", label: "MA1" },
+        { id: "MA5", label: "MA5", loading: 0.813 },
+        { id: "MA4", label: "MA4", loading: 0.813 },
+        { id: "MA3", label: "MA3", loading: 0.813 },
+        { id: "MA2", label: "MA2", loading: 0.813 },
+        { id: "MA1", label: "MA1", loading: 0.813 },
       ],
       VA: [
-        { id: "VA4", label: "VA4" },
-        { id: "VA3", label: "VA3" },
-        { id: "VA2", label: "VA2" },
-        { id: "VA1", label: "VA1" },
+        { id: "VA4", label: "VA4", loading: 0.813 },
+        { id: "VA3", label: "VA3", loading: 0.813 },
+        { id: "VA2", label: "VA2", loading: 0.813 },
+        { id: "VA1", label: "VA1", loading: 0.813 },
       ],
       PE: [
-        { id: "PE2", label: "PE2" },
-        { id: "PE3", label: "PE3" },
-        { id: "PE1", label: "PE1" },
+        { id: "PE2", label: "PE2", loading: 0.813 },
+        { id: "PE3", label: "PE3", loading: 0.813 },
+        { id: "PE1", label: "PE1", loading: 0.813 },
       ],
       FE: [
-        { id: "FE1", label: "FE1" },
-        { id: "FE2", label: "FE2" },
-        { id: "FE3", label: "FE3" },
+        { id: "FE1", label: "FE1", loading: 0.813 },
+        { id: "FE2", label: "FE2", loading: 0.813 },
+        { id: "FE3", label: "FE3", loading: 0.813 },
       ],
       CE: [
-        { id: "CE8", label: "CE8" },
-        { id: "CE7", label: "CE7" },
-        { id: "CE6", label: "CE6" },
-        { id: "CE5", label: "CE5" },
-        { id: "CE4", label: "CE4" },
-        { id: "CE3", label: "CE3" },
-        { id: "CE2", label: "CE2" },
-        { id: "CE1", label: "CE1" },
+        { id: "CE8", label: "CE8", loading: 0.813 },
+        { id: "CE7", label: "CE7", loading: 0.813 },
+        { id: "CE6", label: "CE6", loading: 0.813 },
+        { id: "CE5", label: "CE5", loading: 0.813 },
+        { id: "CE4", label: "CE4", loading: 0.813 },
+        { id: "CE3", label: "CE3", loading: 0.813 },
+        { id: "CE2", label: "CE2", loading: 0.813 },
+        { id: "CE1", label: "CE1", loading: 0.813 },
       ],
     },
     paths: [
@@ -90,58 +91,96 @@ export default function SmartPLSDiagram({ data = null }) {
 
   const spacingBetweenGroups = 0;
   const baseXStart = window.innerWidth / 3;
-  const baseYStart = 300;
 
   useEffect(() => {
     const positions = {};
-    const allHeights = Object.values(lvSizes).map((b) => b?.height ?? 120);
-    const totalHeight =
-      allHeights.reduce((a, b) => a + b + spacingBetweenGroups, 0) ?? 0;
-    const midY = baseYStart + totalHeight / 4;
 
-    const levelLayout = { 1: "left", 2.1: "top", 2.2: "bottom", 3: "right" };
+    const allHeights = Object.values(lvSizes).map((b) => b?.height ?? 120);
+    const totalHeight = allHeights.reduce((a, b) => a + spacingBetweenGroups + b, 0);
+
+    const midY = window.innerHeight / 2;
+
+    const clampY = (y) =>
+      Math.max(100, Math.min(y, window.innerHeight - 200));
+
+    const levelLayout = new Proxy(
+  {
+    1: "left",
+    2.1: "top",
+    2.2: "bottom",
+  },
+  {
+    get(target, prop) {
+      const level = Number(prop);
+
+      // Nếu level >= 3 → auto right
+      if (level >= 3) return "right";
+
+      // Nếu tồn tại trong object → lấy
+      return target[prop];
+    },
+  }
+);
+
 
     Object.entries(levelPositions).forEach(([level, listLvs]) => {
       const type = levelLayout[level];
       const n = listLvs.length;
+
       listLvs.forEach((lv, i) => {
         const bbox = lvSizes[lv.id];
-        const height = bbox ? bbox.height + 60 : 180;
+        const height = bbox ? bbox.height + 80 : 180;
         const spacing = height + 30;
+
+        let posX, posY;
 
         switch (type) {
           case "left":
-            positions[lv.id] = {
-              x: baseXStart - 200,
-              y: midY + (i - (n - 1) / 2) * spacing,
-            };
+            posX = baseXStart - 250;
+            posY = midY + (i - (n - 1) / 2) * spacing;
             break;
+
           case "right":
-            positions[lv.id] = {
-              x: baseXStart + 600,
-              y: midY + (i - (n - 1) / 2) * spacing,
-            };
+            posX = baseXStart + 650;
+            posY = midY + (i - (n - 1) / 2) * spacing;
             break;
+
           case "top":
-            positions[lv.id] = { x: baseXStart + 200, y: midY - 200 - i * spacing };
+            posX = baseXStart + 200;
+            posY = midY - 150 - i * spacing;
             break;
+
           case "bottom":
-            positions[lv.id] = { x: baseXStart + 200, y: midY + 200 + i * spacing };
+            posX = baseXStart + 200;
+            posY = midY + 250 + i * spacing;
             break;
         }
+
+        positions[lv.id] = { x: posX, y: clampY(posY) };
       });
     });
 
     setLvPositions((prev) => ({ ...positions, ...prev }));
   }, [lvSizes]);
 
-  function getNodePosition(id) {
-    return lvPositions[id] ?? null;
-  }
+  const getNodePosition = (id) => lvPositions[id] ?? null;
 
   return (
-    <div style={{ width: "100%", border: "1px solid #ccc" }}>
-      <svg width="100%" height="1200">
+    <div
+      style={{
+        width: "100%",
+        border: "1px solid #ccc",
+        overflow: "visible",
+        padding: "50px 0",
+      }}
+    >
+      <svg
+        width="100%"
+        style={{
+          overflow: "visible",
+          minHeight: "1800px",
+        }}
+      >
         <defs>
           <marker
             id="arrowhead"
@@ -164,7 +203,6 @@ export default function SmartPLSDiagram({ data = null }) {
           const dx = b.x - a.x;
           const dy = b.y - a.y;
           const dist = Math.hypot(dx, dy);
-
           if (dist === 0) return null;
 
           const lvRadius = 50;
@@ -191,17 +229,18 @@ export default function SmartPLSDiagram({ data = null }) {
           return (
             <g
               key={i}
-              onClick={() => setSelectedPathIndex((prev) => (prev === i ? null : i))}
+              onClick={() =>
+                setSelectedPathIndex((prev) => (prev === i ? null : i))
+              }
               style={{ cursor: "pointer" }}
             >
-              {/* line nhấn lớn nhưng trong suốt */}
               <line
                 x1={startX}
                 y1={startY}
                 x2={midX - (dx / dist) * cutDistance}
                 y2={midY - (dy / dist) * cutDistance}
                 stroke="transparent"
-                strokeWidth={15} // tăng vùng click, line 1
+                strokeWidth={15}
               />
               <line
                 x1={midX + (dx / dist) * cutDistance}
@@ -209,10 +248,9 @@ export default function SmartPLSDiagram({ data = null }) {
                 x2={endX}
                 y2={endY}
                 stroke="transparent"
-                strokeWidth={15} // tăng vùng click
+                strokeWidth={15}
               />
-              
-              {/* line thật hiển thị */}
+
               <line
                 x1={startX}
                 y1={startY}
@@ -231,19 +269,17 @@ export default function SmartPLSDiagram({ data = null }) {
                 markerEnd="url(#arrowhead)"
               />
 
-              {/* chữ coefficient */}
               <text
                 x={textX}
                 y={textY}
                 textAnchor="middle"
                 fill="black"
                 fontWeight={selectedPathIndex === i ? "bold" : "normal"}
-                style={{ userSelect: "none", pointerEvents: "none" }} // để click vào g
+                style={{ userSelect: "none", pointerEvents: "none" }}
               >
                 {coef}
               </text>
             </g>
-
           );
         })}
 

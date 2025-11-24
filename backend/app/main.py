@@ -5,15 +5,36 @@ import pandas as pd
 from fastapi.middleware.cors import CORSMiddleware
 from app.service.csv_service import process_csv
 from app.service.run_model import CreateModelRequest, create_model_logic
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
+import math
+
+def sanitize_floats(obj):
+    if isinstance(obj, dict):
+        return {k: sanitize_floats(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [sanitize_floats(v) for v in obj]
+    elif isinstance(obj, float):
+        if math.isnan(obj) or math.isinf(obj):
+            return None
+        return obj
+    else:
+        return obj
+
 
 app = FastAPI()
 
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,        # cho phép từ các domain trên
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"],          # GET, POST, PUT, DELETE…
+    allow_headers=["*"],          # header tùy ý
 )
 
 @app.get("/")
@@ -40,5 +61,11 @@ async def upload_csv(file: UploadFile = File(...)):
 @app.post("/create-model")
 async def create_model(request: CreateModelRequest):
     # Gọi logic từ addpath.py để xử lý tạo mô hình với session_id
-    result = create_model_logic(request.pairs, request.session_id, request.action)
-    return result
+    # Convert NaN/inf -> null
+    try:
+        result = create_model_logic(request.pairs, request.session_id, request.action)
+        safe_result = sanitize_floats(result)
+        return JSONResponse(content=safe_result)
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+

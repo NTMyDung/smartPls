@@ -482,8 +482,6 @@ class Plspm:
 
         return vif_matrix
 
-
-
     def _get_mvs(self, lv):
         # Internal: get manifest variables for a latent variable
         # Lấy trực tiếp từ self._config nếu có

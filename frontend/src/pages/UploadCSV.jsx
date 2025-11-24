@@ -37,54 +37,116 @@ export default function UploadCSV() {
   // Hàm gửi request chạy model
   // Nhận tham số `action` ('pls' hoặc 'bootstrap').
   const handleCreateModel = async (action = "pls") => {
-    if (pairs.length === 0) {
-      alert("Vui lòng chọn ít nhất 1 cặp biến!");
-      return;
+  // 1️⃣ Kiểm tra trước khi gửi lên backend
+  if (!result || !result.session_id) {
+    alert("Session không hợp lệ hoặc đã hết hạn. Vui lòng upload lại file CSV!");
+    return;
+  }
+
+  if (!action) {
+    alert("Hành động mô hình không hợp lệ!");
+    return;
+  }
+
+  if (!pairs || pairs.length === 0) {
+    alert("Vui lòng chọn ít nhất 1 cặp biến!");
+    return;
+  }
+
+  setIsCreating(true);
+
+  try {
+    // 2️⃣ Chuẩn hóa dữ liệu gửi lên backend
+    const pairsForBackend = pairs.map(p => ({
+      independent: p.independent,
+      dependent: p.dependent
+    }));
+
+    console.log("Pairs gửi lên:", pairsForBackend);
+    console.log("session_id gửi lên:", result.session_id);
+    console.log("action:", action);
+
+    // 3️⃣ Gửi request
+    const res = await fetch("http://127.0.0.1:8000/create-model", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        pairs: pairsForBackend,
+        session_id: result.session_id,
+        action: action,
+      }),
+    });
+
+    // 4️⃣ Xử lý kết quả
+    const data = await res.json();
+
+    if (res.ok && data.status === "success") {
+      alert("Mô hình được tạo thành công!");
+      console.log("data:", data);
+      setModelResult(data);
+    } else {
+      alert("Lỗi backend: " + (data.error || "Không thể tạo mô hình"));
+      setModelResult(null);
     }
-    // Đánh dấu UI là đang chạy
-    setIsCreating(true);
-    //Gửi dữ liệu lên BE (sử dụng session_id thay vì truyền toàn bộ data)
-    try {
-      // Loại bỏ field `id` từ pairs vì backend model không cần nó
-      const pairsForBackend = pairs.map(p => ({
-        independent: p.independent,
-        dependent: p.dependent
-      }));
-      console.log("Pairs gửi lên:", pairsForBackend);
-      console.log("result.session_id:", result.session_id);
-      console.log("action:", action);
+  } catch (error) {
+    console.error("Error:", error);
+
+    // 5️⃣ Nếu lỗi fetch → thường là session hết hạn hoặc backend không nhận session_id
+    alert("Không thể kết nối server. Vui lòng upload lại file CSV và thử lại!");
+
+  } finally {
+    setIsCreating(false);
+  }
+};
 
 
-      const res = await fetch("http://127.0.0.1:8000/create-model", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          pairs: pairsForBackend,
-          session_id: result.session_id,  // Gửi session_id để backend lấy full data
-          action: action,
-        }),
-      });
+ const mapPLSResultToDiagram = (plsResult) => {
+  const { path_coefficients, outer_model, latent_levels, inner_summary } = plsResult;
 
-      //Chờ & lấy KQ trả về
-      const data = await res.json();
-      if (res.ok) {
-        alert("Mô hình được tạo thành công!");
-        console.log(data);
-        // Lưu kết quả mô hình để hiển thị biểu đồ
-        setModelResult(data);
-      } else {
-        alert("Lỗi: " + (data.error || "Không thể tạo mô hình"));
-        setModelResult(null);
+  // 1. Lấy latent variables với level từ backend
+  const latentVariables = Object.keys(path_coefficients).map((lvId) => ({
+    id: lvId,
+    label: lvId,
+    level: latent_levels?.[lvId] ?? 1, // fallback level = 1 nếu không có
+     rSquare: inner_summary?.["r_squared"]?.[lvId] ?? null,
+  }));
+
+  console.log("Latent variables:", latentVariables);
+
+  // 2. Lấy manifest variables từ outer_model
+  const manifestVariables = {};
+  if (outer_model?.loading) {
+    const lvNames = Object.keys(path_coefficients);
+    lvNames.forEach((lvId) => {
+      manifestVariables[lvId] = Object.entries(outer_model.loading)
+        .filter(([mvId]) => mvId.startsWith(lvId)) // giả định MV bắt đầu bằng LV id
+        .map(([mvId, loading]) => ({
+          id: mvId,
+          label: mvId,
+          loading,
+        }));
+    });
+  }
+
+  // 3. Lấy paths
+  const paths = [];
+  Object.entries(path_coefficients).forEach(([from, targets]) => {
+    Object.entries(targets).forEach(([to, coef]) => {
+      if (from !== to && coef !== 0) {
+        paths.push({
+          from,
+          to,
+          coefficient: coef,
+          pValue: plsResult.inner_model?.["p>|t|"]?.[`${from} -> ${to}`] ?? 0,
+        });
       }
-    } catch (error) {
-      console.error("Error:", error);
-      alert("Lỗi kết nối: " + error.message);
-    } finally {
-      setIsCreating(false);
-    }
-  };
+    });
+  });
+
+  return { latentVariables, manifestVariables, paths };
+};
 
   const handleRunPls = () => handleCreateModel("pls");
   const handleBootstrap = () => handleCreateModel("bootstrap");
@@ -207,8 +269,8 @@ export default function UploadCSV() {
             {/* =================== Hiển thị biểu đồ SmartPLS nếu mô hình chạy thành công =================== */}
             {modelResult && modelResult.status === "success" && (
               <div style={{ marginTop: "40px" }}>
-                <SmartPLSDiagram data={modelResult.diagram} />
-                console.log("modelResult:", modelResult);
+                {console.log("Mapped diagram data:", mapPLSResultToDiagram(modelResult))}
+                <SmartPLSDiagram data={mapPLSResultToDiagram(modelResult)} />
               </div>
             )}
         </div> 
