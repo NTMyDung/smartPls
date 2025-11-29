@@ -32,7 +32,7 @@ export default function LVDraggable({ lv, baseX, baseY, onDrag }) {
         {lv.label}
       </text>
       {/* R-Square nếu có */}
-      {lv.rSquare !== 0 && (
+      {lv.rSquare && lv.rSquare !== 0 &&(
         <text
           x={baseX}
           y={baseY + 28}

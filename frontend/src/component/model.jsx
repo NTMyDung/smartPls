@@ -178,7 +178,7 @@ export default function SmartPLSDiagram({ data }) {
         width="100%"
         style={{
           overflow: "visible",
-          minHeight: "1800px",
+          minHeight: "800",
         }}
       >
         <defs>
@@ -222,6 +222,7 @@ export default function SmartPLSDiagram({ data }) {
           const perpY = dx / dist;
 
           const coef = path.coefficient.toFixed(3);
+          const pValue = path.pValue != null ? path.pValue.toFixed(3) : null;
 
           const textX = midX + perpX * 5;
           const textY = midY + perpY * 5;
@@ -277,7 +278,8 @@ export default function SmartPLSDiagram({ data }) {
                 fontWeight={selectedPathIndex === i ? "bold" : "normal"}
                 style={{ userSelect: "none", pointerEvents: "none" }}
               >
-                {coef}
+                {/* {coef} */}
+                {pValue != null ? `${coef} (${pValue})` : coef}
               </text>
             </g>
           );
