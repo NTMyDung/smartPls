@@ -96,6 +96,8 @@ def run_pls_analysis(data_df: pd.DataFrame, config: Config, structure: Structure
 
     path_coeffs = pls.path_coefficients().to_dict()
     lv_levels = assign_layers(path_coeffs)
+
+    # print_treated_data(config, data_df)
     
     result = {
         "status": "success",
@@ -110,7 +112,6 @@ def run_pls_analysis(data_df: pd.DataFrame, config: Config, structure: Structure
         "fornell_larcker": pls.fornell_larcker().to_dict(),
         "outer_vif": pls.outer_vif().to_dict(),
         "inner_vif": pls.inner_vif().to_dict(),
-        "goodness_of_fit": pls.goodness_of_fit()
     }
 
     return round_floats(result)
@@ -200,3 +201,29 @@ def create_model_logic(pairs: List[PairModel], session_id: Optional[str], action
         import traceback
         traceback.print_exc()
         return {"status": "error", "error": str(e)}
+    
+def print_treated_data(config: Config, data_df: pd.DataFrame, max_rows=10):
+    """
+    In dữ liệu đã qua xử lý (treat) từ Config.
+
+    Tham số:
+        config: object Config
+        data_df: DataFrame gốc
+        max_rows: số dòng in ra để kiểm tra
+    """
+    treated = config.treat(data_df)
+    print("=== Treated Data Summary ===")
+    print(f"Shape: {treated.shape}")
+    print(f"Columns: {list(treated.columns)}\n")
+    
+    # In một số dòng đầu
+    print("Sample rows:")
+    print(treated.head(max_rows))
+    
+    # Nếu có dummy matrix, in luôn shape và vài giá trị đầu
+    if config._Config__dummies:
+        print("\nDummy Matrices:")
+        for mv, dummy in config._Config__dummies.items():
+            print(f"  MV: {mv}, Dummy shape: {dummy.shape}")
+            print(f"    Sample:\n{dummy[:min(3, len(dummy)), :]}")  # in 3 dòng đầu
+
