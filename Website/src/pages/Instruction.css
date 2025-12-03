@@ -1,0 +1,26 @@
+.instruction-container {
+  min-height: 100vh;
+  padding-top: 100px;
+  background: #f8f9fa;
+}
+
+.content-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: white;
+  margin-top: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.content-wrapper h1 {
+  color: #333;
+  margin-bottom: 1rem;
+  font-family: 'Lora', serif;
+}
+
+.content-wrapper p {
+  color: #666;
+  line-height: 1.6;
+}
