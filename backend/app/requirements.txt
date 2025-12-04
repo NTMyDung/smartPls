@@ -1,0 +1,9 @@
+# pandas
+numpy
+scipy
+statsmodels
+scikit-learn
+pytest
+setuptools
+flask
+flask-cors

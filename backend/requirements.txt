@@ -1,0 +1,15 @@
+Flask==3.0.3
+flask-cors==4.0.0
+pandas
+gunicorn==21.2.0
+pandas
+numpy
+scipy
+statsmodels
+scikit-learn
+pytest
+setuptools
+fastapi
+uvicorn[standard]
+python-multipart
+
