@@ -1,5 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import './Header.css';
+import logo from '../../assets/logo.png';
+
 
 export default function Header() {
   const location = useLocation();
@@ -14,7 +16,7 @@ export default function Header() {
     <header className="header">
       <div className="header-content">
         <div className="logo">
-          <img src="/logo.png" alt="Logo" />
+          <img src={logo} alt="Logo" />
         </div>
         <nav className="navigation">
           {navItems.map((item) => (

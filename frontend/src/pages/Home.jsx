@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Home.css';
 import { useUpload } from '../context/UploadContext.jsx';
+import bg from '../assets/bg.png';
 
 export default function HomePage() {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -73,7 +74,7 @@ export default function HomePage() {
     <div
       className="home-container"
       style={{
-        backgroundImage: `url('/bg.png')`,
+        backgroundImage: `url(${bg})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
