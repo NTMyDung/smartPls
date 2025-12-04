@@ -45,7 +45,7 @@ export default function HomePage() {
       const formData = new FormData();
       formData.append('file', selectedFile);
 
-      const res = await fetch('http://127.0.0.1:8000/upload-csv', {
+      const res = await fetch('https://smartpls-2.onrender.com/upload-csv', {
         method: 'POST',
         body: formData,
       });
