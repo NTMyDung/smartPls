@@ -16,7 +16,7 @@ export default function Header() {
     <header className="header">
       <div className="header-content">
         <div className="logo">
-          <img src={logo} alt="Logo" />
+          <img src={logo} alt="Logo" href="/"/>
         </div>
         <nav className="navigation">
           {navItems.map((item) => (
