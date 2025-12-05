@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import useSvgDrag from "./useSvgDrag";
+import useSvgDrag from "../components/useSvgDrag";
 
 export default function MVDraggable({ mv, baseX, baseY, onDrag }) {
   const ref = useRef(null);

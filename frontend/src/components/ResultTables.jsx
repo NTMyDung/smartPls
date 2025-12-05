@@ -22,7 +22,7 @@ export default function ResultTables({
                 textAlign: "left",
                 borderRadius: "6px",
                 cursor: "pointer",
-                background: selectedTable === tbl.key ? "#041946ff" : "#E5E7EB",
+                background: selectedTable === tbl.key ? "#041946ff" : "white",
                 color: selectedTable === tbl.key ? "white" : "black",
                 fontWeight: "bold",
               }}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import LVGroup from "./LVGroup.jsx";
 
 export default function SmartPLSDiagram({ data }) {
@@ -65,15 +65,22 @@ export default function SmartPLSDiagram({ data }) {
     ],
   };
 
-  const currentData = {
+  const currentData = useMemo(() => ({
     latentVariables: data?.latentVariables ?? mockData.latentVariables,
     manifestVariables: data?.manifestVariables ?? mockData.manifestVariables,
     paths: data?.paths ?? mockData.paths,
-  };
+  }), [data]);
 
   const [lvSizes, setLvSizes] = useState({});
   const [lvPositions, setLvPositions] = useState({});
   const [selectedPathIndex, setSelectedPathIndex] = useState(null);
+
+  // Reset state when data changes
+  useEffect(() => {
+    setLvSizes({});
+    setLvPositions({});
+    setSelectedPathIndex(null);
+  }, [data]);
 
   const handleSizeChange = (lvId, bbox) => {
     setLvSizes((prev) => ({ ...prev, [lvId]: bbox }));
@@ -161,7 +168,7 @@ export default function SmartPLSDiagram({ data }) {
     });
 
     setLvPositions((prev) => ({ ...positions, ...prev }));
-  }, [lvSizes]);
+  }, [lvSizes, currentData]);
 
   const getNodePosition = (id) => lvPositions[id] ?? null;
 
@@ -170,15 +177,19 @@ export default function SmartPLSDiagram({ data }) {
       style={{
         width: "100%",
         border: "1px solid #ccc",
-        overflow: "visible",
+        overflow: "auto",
         padding: "50px 0",
+        maxHeight: "85vh",
+        maxWidth: "100%",
       }}
     >
       <svg
-        width="100%"
+        viewBox="0 0 2000 800"
         style={{
           overflow: "visible",
           minHeight: "800",
+          width: "110rem",
+          height:"fit-content"
         }}
       >
         <defs>

@@ -1,26 +1,29 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useUpload } from '../context/UploadContext.jsx';
+import Variable from '../components/Variable.jsx';
+import StepNavigation from '../components/StepNavigation.jsx';
+import TableData from '../components/TableData.jsx';
+import AnalysisHeader from '../components/AnalysisHeader.jsx';
+import RunButtons from '../components/RunButtons.jsx';
+import ModelDiagram from '../components/ModelDiagram.jsx';
+import ResultTables from '../components/ResultTables.jsx';
+import Notification from '../components/Notification.jsx';
 
-import { useState } from "react";
+export default function AnalysisPage() {
+  const { uploadState, setUploadState } = useUpload();
+  const navigate = useNavigate();
+  const { fileName, result } = uploadState;
 
-// Các component tách riêng
-import UploadHeader from "./UploadCsv/UploadHeader";
-import CSVPreview from "./UploadCsv/CSVPreview";
-import PairSelector from "./UploadCsv/PairSelector";
-import RunButtons from "./UploadCsv/RunButtons";
-import ModelDiagram from "./UploadCsv/ModelDiagram";
-import ResultTables from "./UploadCsv/ResultTables";
-
-// Page: UploadCSV
-
-export default function UploadCSV() {
-  const [file, setFile] = useState(null);
-  const [result, setResult] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [variables, setVariables] = useState(result?.variables || []);
   const [pairs, setPairs] = useState([]);
   const [modelResult, setModelResult] = useState(null);
   const [selectedTable, setSelectedTable] = useState(null);
-
-  // Loading riêng cho từng nút
   const [loadingPls, setLoadingPls] = useState(false);
   const [loadingBoot, setLoadingBoot] = useState(false);
+  const [notification, setNotification] = useState(null);
 
   // Danh sách bảng theo từng action
   const TABLES_BY_ACTION = {
@@ -42,30 +45,67 @@ export default function UploadCSV() {
     ],
   };
 
-  // UPLOAD CSV
-  const handleUpload = async () => {
-    if (!file) return alert("Chọn file CSV trước!");
+  if (!result) {
+    navigate('/');
+    return null;
+  }
 
-    const formData = new FormData();
-    formData.append("file", file);
+  const handleEditFile = async () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv';
 
-    const res = await fetch("http://127.0.0.1:8000/upload-csv", {
-      method: "POST",
-      body: formData,
-    });
+    input.onchange = async (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
 
-    const data = await res.json();
-    setResult(data.summary);
+      if (!file.name.toLowerCase().endsWith('.csv')) {
+        setEditError('Chỉ chấp nhận file CSV (.csv)');
+        return;
+      }
+
+      try {
+        setIsEditing(true);
+        setEditError('');
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const res = await fetch('https://smartpls-2.onrender.com/upload-csv', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          throw new Error(data.error || 'Không thể cập nhật file');
+        }
+
+        setUploadState({
+          fileName: file.name,
+          result: data.summary,
+        });
+        setVariables(data.summary.variables || []);
+        setPairs([]);
+      } catch (e) {
+        setEditError(e.message || 'Đã xảy ra lỗi khi cập nhật file');
+      } finally {
+        setIsEditing(false);
+      }
+    };
+
+    input.click();
   };
 
   // Tạo model (PLS hoặc bootstrap)
   const handleCreateModel = async (action = "pls") => {
     if (!result || !result.session_id) {
-      alert("Session không hợp lệ. Hãy upload lại CSV!");
+      setNotification({ message: "Session không hợp lệ. Hãy upload lại CSV!", type: "error" });
       return;
     }
     if (!pairs.length) {
-      alert("Hãy chọn ít nhất 1 cặp biến!");
+      setNotification({ message: "Hãy chọn ít nhất 1 cặp biến!", type: "error" });
       return;
     }
 
@@ -75,11 +115,11 @@ export default function UploadCSV() {
 
     try {
       const pairsForBackend = pairs.map(p => ({
-        independent: p.independent,
+        independent: Array.isArray(p.independent) ? p.independent : [p.independent],
         dependent: p.dependent,
       }));
 
-      const res = await fetch("http://127.0.0.1:8000/create-model", {
+      const res = await fetch("https://smartpls-2.onrender.com/create-model", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -92,13 +132,13 @@ export default function UploadCSV() {
       const data = await res.json();
 
       if (res.ok && data.status === "success") {
-        alert("Mô hình được tạo thành công!");
+        setNotification({ message: "Mô hình được tạo thành công!", type: "success" });
         setModelResult(data);
       } else {
-        alert("Lỗi backend: " + (data.error || "Không thể tạo mô hình"));
+        setNotification({ message: "Lỗi backend: " + (data.error || "Không thể tạo mô hình"), type: "error" });
       }
     } catch (err) {
-      alert("Không thể kết nối server.");
+      setNotification({ message: "Không thể kết nối server.", type: "error" });
     } finally {
       if (action === "pls") setLoadingPls(false);
       if (action === "bootstrap") setLoadingBoot(false);
@@ -165,7 +205,7 @@ export default function UploadCSV() {
     return { latentVariables, manifestVariables, paths };
   };
 
-  // RENDER MA TRẬN (giữ nguyên)
+  // RENDER MA TRẬN
   const renderMatrixTable = (matrix) => {
     if (!matrix || typeof matrix !== "object") return <p>Không có dữ liệu.</p>;
 
@@ -185,9 +225,9 @@ export default function UploadCSV() {
       >
         <thead>
           <tr>
-            <th style={{ background: "#eee" }}>LV</th>
+            <th style={{ background: "rgb(255 245 211)" }}>LV</th>
             {cols.map(c => (
-              <th key={c} style={{ background: "#eee" }}>{c}</th>
+              <th key={c} style={{ background: "rgb(255 245 211)" }}>{c}</th>
             ))}
           </tr>
         </thead>
@@ -195,7 +235,7 @@ export default function UploadCSV() {
         <tbody>
           {rows.map(r => (
             <tr key={r}>
-              <td><b>{r}</b></td>
+              <td style={{ background: "rgb(160 201 255 / 20%)", color: "black" }}><b>{r}</b></td>
               {cols.map(c => (
                 <td key={c}>{matrix[r]?.[c] ?? ""}</td>
               ))}
@@ -206,7 +246,7 @@ export default function UploadCSV() {
     );
   };
 
-  // RENDER TABLE KEY-VALUE (giữ nguyên)
+  // RENDER TABLE KEY-VALUE
   const renderTable = (obj) => {
     if (!obj) return <p></p>;
 
@@ -253,49 +293,68 @@ export default function UploadCSV() {
     );
   };
 
+  const { columns = [], preview = [], row_count = 0 } = result || {};
+
   return (
-    <div style={{ padding: "20px" }}>
-      {/* Upload + Header */}
-      <UploadHeader file={file} setFile={setFile} handleUpload={handleUpload} />
+    <div style={{ padding: '2rem 7rem', margin: '74px auto 74px auto' }}>
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
+      <AnalysisHeader
+        fileName={fileName}
+        rowCount={row_count}
+        isEditing={isEditing}
+        editError={editError}
+        onEditFile={handleEditFile}
+      />
+      <TableData
+        columns={columns}
+        preview={preview}
+      />
+      <hr style={{ margin: '30px 0' , border: '2px solid rgb(162 162 162)'}}></hr>
+      <div style={{ marginTop: '30px' }}>
+        <h3>Các biến từ file:</h3>
+        <Variable variables={variables} />
+      </div>
+      <hr style={{ margin: '30px 0' , border: '2px solid rgb(162 162 162)'}}></hr>
+      <div style={{ marginTop: '40px', marginBottom: '40px' }}>
+        <h3>Tiến hành chọn các cặp biến</h3>
+        <StepNavigation variables={variables} onPairsChange={setPairs} />
+      </div>
 
-      {/* Preview CSV */}
-      <CSVPreview result={result} />
+      {/* Nút chạy */}
+      <RunButtons
+        pairs={pairs}
+        loadingPls={loadingPls}
+        loadingBoot={loadingBoot}
+        handleRunPls={handleRunPls}
+        handleBootstrap={handleBootstrap}
+      />
 
-      {result && (
-        <div>
-          {/* Chọn cặp biến */}
-          <PairSelector variables={result.variables} setPairs={setPairs} />
+      {/* VẼ MÔ HÌNH */}
+      {modelResult?.status === "success" && (
+        <ModelDiagram
+          modelResult={modelResult}
+          diagramData={mapPLSResultToDiagram(modelResult, modelResult.action)}
+        />
+      )}
 
-          {/* Nút chạy */}
-          <RunButtons
-            pairs={pairs}
-            loadingPls={loadingPls}
-            loadingBoot={loadingBoot}
-            handleRunPls={handleRunPls}
-            handleBootstrap={handleBootstrap}
-          />
-
-          {/* VẼ MÔ HÌNH */}
-          {modelResult?.status === "success" && (
-            <ModelDiagram
-              modelResult={modelResult}
-              diagramData={mapPLSResultToDiagram(modelResult, modelResult.action)}
-            />
-          )}
-
-          {/* BẢNG KẾT QUẢ */}
-          {modelResult?.status === "success" && (
-            <ResultTables
-              TABLES_BY_ACTION={TABLES_BY_ACTION}
-              modelResult={modelResult}
-              selectedTable={selectedTable}
-              setSelectedTable={setSelectedTable}
-              renderTable={renderTable}
-            />
-          )}
-        </div>
+      {/* BẢNG KẾT QUẢ */}
+      {modelResult?.status === "success" && (
+        <ResultTables
+          TABLES_BY_ACTION={TABLES_BY_ACTION}
+          modelResult={modelResult}
+          selectedTable={selectedTable}
+          setSelectedTable={setSelectedTable}
+          renderTable={renderTable}
+        />
       )}
     </div>
   );
 }
+
 

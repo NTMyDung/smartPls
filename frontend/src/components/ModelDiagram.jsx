@@ -1,4 +1,4 @@
-import SmartPLSDiagram from "../../component/model";
+import SmartPLSDiagram from "./model";
 
 export default function ModelDiagram({ modelResult, diagramData }) {
   if (!modelResult) return null;
