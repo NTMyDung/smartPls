@@ -296,7 +296,7 @@ export default function AnalysisPage() {
   const { columns = [], preview = [], row_count = 0 } = result || {};
 
   return (
-    <div style={{ padding: '2rem 7rem', margin: '74px auto 74px auto' }}>
+    <div style={{ padding: '2rem 7rem', margin: 'auto' }}>
       {notification && (
         <Notification
           message={notification.message}
