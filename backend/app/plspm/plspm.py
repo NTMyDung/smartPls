@@ -46,6 +46,265 @@ class Plspm:
         else:
             self.bootstrap = None
 
+    def plot_smartpls_diagram(self, figsize=(14, 10), pvals=None):
+        """
+        Vẽ sơ đồ SmartPLS-like: latent variable (LV) là hình tròn xanh, 
+        manifest variable (MV) là hình chữ nhật vàng, có đường nối và 
+        thông số trên đường (hệ số và p-value).
+        """
+        import networkx as nx
+        import matplotlib.pyplot as plt
+
+        # Lấy thông tin
+        path = self.path_matrix()
+        lvs = list(path.index)
+        mv_dict = {lv: self._get_mvs(lv) for lv in lvs}
+        path_coef = self.path_coefficients()
+
+        # Tạo đồ thị
+        G = nx.DiGraph()
+
+        # Thêm node latent variables
+        for lv in lvs:
+            G.add_node(lv, type='lv')
+
+        # Thêm node manifest variables và cạnh LV → MV
+        for lv, mvs in mv_dict.items():
+            for mv in mvs:
+                G.add_node(mv, type='mv')
+                
+                # Lấy loading từ outer_model DataFrame
+                outer = self.outer_model()
+                if mv in outer.index and 'loading' in outer.columns:
+                    loading = outer.loc[mv, 'loading']
+                else:
+                    loading = np.nan
+                
+                # Lấy p-value nếu có cho cạnh LV→MV
+                pval = None
+                if pvals is not None:
+                    try:
+                        if isinstance(pvals, pd.Series) and isinstance(pvals.index, pd.MultiIndex):
+                            pval = pvals.get((mv, lv), None)
+                        elif isinstance(pvals, pd.Series):
+                            pval = pvals.get(mv, None)
+                    except Exception:
+                        pval = None
+                if not pd.isna(loading):
+                    if pval is not None and not pd.isna(pval):
+                        G.add_edge(lv, mv, label=f'{loading:.3f} ({pval:.3f})')
+                    else:
+                        G.add_edge(lv, mv, label=f'{loading:.3f}')
+                else:
+                    G.add_edge(lv, mv, label='')
+
+        # Thêm các cạnh giữa các latent variables
+        for src in path.columns:
+            for tgt in path.index:
+                if path.loc[tgt, src] == 1:
+                    coef = path_coef.loc[tgt, src]
+                    
+                    # Nếu có pvals, lấy đúng p-value cho cạnh này
+                    pval = None
+                    if pvals is not None:
+                        try:
+                            if isinstance(pvals, pd.Series) and isinstance(pvals.index, pd.MultiIndex):
+                                pval = pvals.get((tgt, src), None)
+                            elif isinstance(pvals, pd.Series):
+                                pval = pvals.get(tgt, None)
+                        except Exception:
+                            pval = None
+                    if pval is not None and not pd.isna(pval):
+                        G.add_edge(src, tgt, label=f'{coef:.3f} ({pval:.3f})')
+                    else:
+                        G.add_edge(src, tgt, label=f'{coef:.3f}')
+
+        # LAYOUT
+        # Tùy chỉnh vị trí thủ công cho các node để xếp thẳng hàng
+        custom_pos = {}
+
+        # Xác định các layer (cột) cho latent variables dựa vào thứ bậc trong path matrix
+        # Layer 0: không có input (exogenous), layer 1: nhận input từ layer 0, ...
+        from collections import defaultdict, deque
+        path_bin = (path != 0).astype(int)
+        indegree = {lv: path_bin.loc[lv].sum() for lv in lvs}
+        layers = defaultdict(list)
+        assigned = set()
+        current_layer = 0
+        queue = deque([lv for lv in lvs if indegree[lv] == 0])
+        while queue:
+            next_queue = deque()
+            for lv in queue:
+                layers[current_layer].append(lv)
+                assigned.add(lv)
+            
+            # Tìm các node mà tất cả input đã được gán layer
+            for lv in lvs:
+                if lv in assigned:
+                    continue
+                preds = [src for src in path.columns if path.loc[lv, src] == 1]
+                if all(pred in assigned for pred in preds):
+                    next_queue.append(lv)
+            queue = next_queue
+            current_layer += 1
+
+        # Gán vị trí cho latent variables tự động theo layer, căn giữa lớp sau với lớp trước
+        prev_y = {}  # lưu toạ độ y của lớp trước
+        for col, lvs_in_col in layers.items():
+            n = len(lvs_in_col)
+            if col == 0:
+                # Lớp đầu, xếp đều từ y=0
+                for i, lv in enumerate(lvs_in_col):
+                    custom_pos[lv] = (col * 3, -i * 8)
+                prev_y[col] = [custom_pos[lv][1] for lv in lvs_in_col]
+            else:
+                prev_col = col - 1
+                prev_ys = prev_y.get(prev_col, [0])
+                center_prev = np.mean(prev_ys)
+                if col == 1:
+                    step_y = 6
+                else:
+                    step_y = 4
+                total_height = (n - 1) * step_y
+                start_y = center_prev + total_height / 2
+                for i, lv in enumerate(lvs_in_col):
+                    y = start_y - i * step_y 
+                    custom_pos[lv] = (col * 3, y*1.2 + 3)
+                    if i == 1: custom_pos[lv] = (col * 3, y*1.2 - 2)
+                prev_y[col] = [custom_pos[lv][1] for lv in lvs_in_col]
+
+        # Gán vị trí cho manifest variables quanh mỗi latent variable
+        # Gán vị trí cho manifest variables dựa vào layer
+        for col, lvs_in_col in layers.items():
+            for i, lv in enumerate(lvs_in_col):
+                if lv in custom_pos:
+                    x, y = custom_pos[lv]
+                    mvs = mv_dict.get(lv, [])
+                    for j, mv in enumerate(mvs):
+                        k = len(mvs)
+                        
+                        if col == 0:
+                            # Trái
+                            offset = (j - (k - 1) / 2) * 1.5
+                            custom_pos[mv] = (x - 1.7, y + offset)
+                        elif col == 1:
+                            
+                            # Xếp hàng ngang: biến đầu ở trên latent variable,
+                            if i == 0: # Trên LV
+                                if j != 1:
+                                    custom_pos[mv] = (x + (j-1) * 1.2, y + 3.5)
+                                    
+                                    # Đánh dấu MV chính (j==1) để shrinkB=25 khi vẽ
+                                    G.nodes[mv]['main_mv'] = False
+                                else:
+                                    custom_pos[mv] = (x + (j-1) * 0.8, y + 5)
+                                    G.nodes[mv]['main_mv'] = True
+                            else: 
+                                # Dưới LV
+                                if j != 1:
+                                    custom_pos[mv] = (x + (j-1) * 1.2, y - 3.5)
+                                    G.nodes[mv]['main_mv'] = False
+                                else:
+                                    custom_pos[mv] = (x + (j-1) * 0.8, y - 5)
+                                    G.nodes[mv]['main_mv'] = True
+                        else:
+                            # Phải
+                            mean = (j - (k - 1) / 2) # * 3.5
+                            custom_pos[mv] = (x + 2.2 - abs(3.5 - j)*0.3, y + mean*2.5)
+                            G.nodes[mv]['main_mv'] = True
+                            if 2 <= j <= 5:
+                                G.nodes[mv]['main_mv'] = False
+                            else:
+                                G.nodes[mv]['main_mv'] = True
+
+        pos = custom_pos
+
+        # Phân loại node
+        lv_nodes = [n for n, d in G.nodes(data=True) if d['type'] == 'lv']
+        mv_nodes = [n for n, d in G.nodes(data=True) if d['type'] == 'mv']
+
+        # Vẽ
+        plt.figure(figsize=figsize)
+        nx.draw_networkx_nodes(G, pos, nodelist=lv_nodes, node_color='dodgerblue', node_shape='o', node_size=2500)
+        # nx.draw_networkx_nodes(G, pos, nodelist=mv_nodes, node_color='yellow', node_shape='s', node_size=1500)
+        ax = plt.gca()
+
+        for node in mv_nodes:
+            if node in pos:  # Kiểm tra vị trí tồn tại
+                x, y = pos[node]
+                width = 0.6
+                height = 0.8
+                rect = patches.Rectangle(
+                    (x - width/2, y - height/2), width, height,
+                    linewidth=0.5, edgecolor='black', facecolor='yellow', zorder=5
+                )
+                ax.add_patch(rect)
+                ax.text(x, y, node, ha='center', va='center', fontsize=9, zorder=6)
+
+        from matplotlib.patches import FancyArrowPatch
+
+        ax = plt.gca()
+
+        for u, v in G.edges():
+            # Gán shrinkB cho các node đã đánh dấu 
+            shrinkB = 12 if G.nodes.get(v, {}).get('main_mv', False) else (20 if G.nodes.get(v, {}).get('ce_mv', False) else 27)
+            arrow = FancyArrowPatch(pos[u], pos[v],
+                                    connectionstyle="arc3",
+                                    arrowstyle='-|>',
+                                    color='black',
+                                    mutation_scale=10,
+                                    linewidth=0.5,
+                                    shrinkB=shrinkB,
+                                    )
+            ax.add_patch(arrow)
+
+        # Xác định latent variable nào có MV xếp bên dưới để đặt label lên trên
+        lv_label_pos = {}
+        for lv in lv_nodes:
+            # Kiểm tra nếu có MV xếp bên dưới (col==1, i!=0)
+            label_above = False
+            for col, lvs_in_col in layers.items():
+                if lv in lvs_in_col and col == 1:
+                    i = lvs_in_col.index(lv)
+                    if i != 0:
+                        label_above = True
+            if label_above:
+                lv_label_pos[lv] = (pos[lv][0], pos[lv][1] + 2)
+            else:
+                lv_label_pos[lv] = (pos[lv][0], pos[lv][1] - 1.7)
+        nx.draw_networkx_labels(G, lv_label_pos, labels={lv: lv for lv in lv_nodes}, font_size=10, font_weight='normal', verticalalignment='top')
+        
+        # Vẽ label cho manifest variable như cũ (giữa hình chữ nhật)
+        mv_label_pos = {mv: pos[mv] for mv in mv_nodes}
+        nx.draw_networkx_labels(G, mv_label_pos, labels={mv: mv for mv in mv_nodes}, font_size=10, font_weight='normal')
+
+        # Thêm R squared vào giữa hình tròn latent variable
+        # try:
+        #     r2_df = self.inner_summary()
+        #     if 'R squared' in r2_df.columns:
+        #         r2_col = 'R squared'
+        #     elif 'r_squared' in r2_df.columns:
+        #         r2_col = 'r_squared'
+        #     else:
+        #         r2_col = None
+        # except Exception:
+        #     r2_col = None
+        # if r2_col:
+        #     for lv in lv_nodes:
+        #         r2_val = r2_df[r2_col][lv] if lv in r2_df.index else None
+        #         if r2_val is not None and not pd.isna(r2_val) and abs(r2_val) > 1e-8:
+        #             plt.text(pos[lv][0], pos[lv][1], f'{r2_val:.3f}',
+        #                      fontsize=9, color='white', ha='center', va='center', fontweight='bold', bbox=dict(facecolor='dodgerblue', edgecolor='none', boxstyle='circle,pad=0.35', alpha=0))
+
+        edge_labels = nx.get_edge_attributes(G, 'label')
+        nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color='black', font_size=9, rotate=False)
+
+        plt.axis('off')
+        
+        # plt.title('SmartPLS-like Path Diagram with Coefficients and p-values', fontsize=14)
+        plt.tight_layout()
+        plt.show()
+
     def f2(self) -> pd.DataFrame:
         """
         Tính chỉ số f2 effect size cho từng predictor trên từng endogenous latent variable.
@@ -313,7 +572,8 @@ class Plspm:
         return self.__scores
 
     def outer_model(self) -> pd.DataFrame:
-        """Lấy mô hình outer (outer model). """
+        """Lấy mô hình outer (outer model). 
+        Trả về một DataFrame với các cột weight (trọng số), loading (tải nhân tố), communality (độ chung) và redundancy (thừa dư), và mỗi hàng tương ứng với một biến hiện tượng (manifest variable).        """
        
         return self.__outer_model.model()
 

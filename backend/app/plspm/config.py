@@ -53,7 +53,8 @@ class MV:
     - Mỗi biến có tên và kiểu đo lường (scale).
     """
     def __init__(self, name: str, scale: Scale = None):
-        # Khởi tạo với tên biến và kiểu đo lường 
+        # Khởi tạo manifest variable với tên và kiểu đo lường
+        # Khởi tạo với tên biến và kiểu đo lường (nếu có)
         self.__scale = scale
         self.__name = name
 
@@ -67,7 +68,7 @@ class MV:
     def scale(self):
         # Trả về kiểu đo lường của biến quan sát
         """
-        Trả về kiểu đo lường của biến quan sát 
+        Trả về kiểu đo lường của biến quan sát (nếu có).
         """
         return self.__scale
 
@@ -296,7 +297,7 @@ class Config:
                 scale_values = metric_data.stack().std() * np.sqrt((metric_data.shape[0] - 1) / metric_data.shape[0])
                 return util.treat(metric_data, scale_values=scale_values)
             else:
-                return util.treat(metric_data, scale=True)
+                return util.treat(metric_data, scale=False)
         else:
             if None in self.__mv_scales.values():
                 raise TypeError("If you supply a scale for any MV, you must either supply a scale for all of them or specify a default scale.")
@@ -311,54 +312,3 @@ class Config:
                     data.loc[:, mv] = util.rank(data.loc[:, mv])
                     self.__dummies[mv] = util.dummy(data.loc[:, mv]).values
             return data
-
-    # def treat(self, data: pd.DataFrame) -> pd.DataFrame:
-    #     # Xử lý dữ liệu: chuẩn hóa, chuyển đổi, tạo ma trận giả cho biến thứ tự/định danh
-    #     print("=== START treat ===")
-    #     print("Original data shape:", data.shape)
-    #     print("Columns:", data.columns.tolist())
-
-    #     if self.__metric:
-    #         print("Metric data processing")
-    #         metric_data = util.impute(data) if self.__missing else data
-    #         print("After impute (if any):")
-    #         print(metric_data.head())
-
-    #         if self.__scaled:
-    #             scale_values = metric_data.stack().std() * np.sqrt((metric_data.shape[0] - 1) / metric_data.shape[0])
-    #             print("Scale values calculated:", scale_values)
-    #             treated = util.treat(metric_data, scale_values=scale_values)
-    #             print("Treated metric data (scaled):")
-    #             print(treated.head())
-    #             return treated
-    #         else:
-    #             treated = util.treat(metric_data, scale=True)
-    #             print("Treated metric data (not scaled):")
-    #             print(treated.head())
-    #             return treated
-    #     else:
-    #         print("Non-metric data processing")
-    #         if None in self.__mv_scales.values():
-    #             raise TypeError("If you supply a scale for any MV, you must either supply a scale for all of them or specify a default scale.")
-
-    #         print("MV scales:", self.__mv_scales)
-    #         if set(self.__mv_scales.values()) == {Scale.RAW}:
-    #             self.__scaled = False
-    #         if set(self.__mv_scales.values()) == {Scale.RAW, Scale.NUM}:
-    #             self.__scaled = True
-    #             self.__mv_scales = dict.fromkeys(self.__mv_scales, Scale.NUM)
-
-    #         data = util.treat(data) / np.sqrt((data.shape[0] - 1) / data.shape[0])
-    #         print("After treat and scaling:")
-    #         print(data.head())
-
-    #         for mv in self.__mv_scales:
-    #             if self.__mv_scales[mv] in [Scale.ORD, Scale.NOM]:
-    #                 print(f"Processing ordinal/nominal variable: {mv}")
-    #                 data.loc[:, mv] = util.rank(data.loc[:, mv])
-    #                 self.__dummies[mv] = util.dummy(data.loc[:, mv]).values
-    #                 print(f"Dummies for {mv} created, shape:", self.__dummies[mv].shape)
-
-    #         print("=== END treat ===")
-    #         return data
-

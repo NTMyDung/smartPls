@@ -20,26 +20,22 @@ def treat(data: pd.DataFrame, center: bool = True, scale: bool = True, scale_val
         if scale_values:
             data = data.divide(scale_values)
         else:
-            data = data.divide(data.std(ddof=0))
+            data = data.divide(data.std())
     return data
 
 
 def treat_numpy(data: np.ndarray) -> np.ndarray:
     """
-    Chuẩn hóa dữ liệu theo từng cột (biến) với mean và std tính theo sample std (ddof=1).
+    Hàm xử lý dữ liệu dạng Numpy: chuẩn hóa, chuyển đổi, scale.
+
+    Tham số:
+        data: Dữ liệu numpy cần xử lý
+
+    Trả về:
+        Mảng numpy đã xử lý
     """
-
-    # Tính mean theo từng cột (axis=0)
-    mean = np.nanmean(data, axis=0)
-
-    # Tính std theo từng cột (axis=0), ddof=1 cho sample std
-    std = np.nanstd(data, axis=0, ddof=1)
-
-    # Chuẩn hóa: (x - mean) / std
-    data_norm = (data - mean) / std
-
-    return data_norm
-
+    data = data - np.nanmean(data)
+    return data / np.nanstd(data, axis=0, ddof=1)
 
 
 def sort_cols(data: pd.DataFrame) -> pd.DataFrame:
