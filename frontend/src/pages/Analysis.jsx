@@ -13,7 +13,7 @@ import Notification from '../components/Notification.jsx';
 export default function AnalysisPage() {
   const { uploadState, setUploadState } = useUpload();
   const navigate = useNavigate();
-  const { fileName, result } = uploadState;
+  const { fileName, result, savedFile: contextSavedFile } = uploadState;
 
   const [isEditing, setIsEditing] = useState(false);
   const [editError, setEditError] = useState('');
@@ -24,6 +24,8 @@ export default function AnalysisPage() {
   const [loadingPls, setLoadingPls] = useState(false);
   const [loadingBoot, setLoadingBoot] = useState(false);
   const [notification, setNotification] = useState(null);
+  const [savedFile, setSavedFile] = useState(contextSavedFile || null); // Lưu file để có thể upload lại
+  const [isRefreshingSession, setIsRefreshingSession] = useState(false);
 
   // Danh sách bảng theo từng action
   const TABLES_BY_ACTION = {
@@ -85,9 +87,11 @@ export default function AnalysisPage() {
         setUploadState({
           fileName: file.name,
           result: data.summary,
+          savedFile: file, // Lưu file vào context
         });
         setVariables(data.summary.variables || []);
         setPairs([]);
+        setSavedFile(file); // Lưu file vào local state
       } catch (e) {
         setEditError(e.message || 'Đã xảy ra lỗi khi cập nhật file');
       } finally {
@@ -96,6 +100,63 @@ export default function AnalysisPage() {
     };
 
     input.click();
+  };
+
+  // Hàm refresh session - upload lại file để tạo session mới
+  const refreshSession = async () => {
+    if (!savedFile) {
+      setNotification({ 
+        message: "Không tìm thấy file đã lưu. Vui lòng upload lại file CSV!", 
+        type: "error" 
+      });
+      return null; // Trả về null thay vì false
+    }
+
+    try {
+      setIsRefreshingSession(true);
+      setNotification({ 
+        message: "Đang làm mới session...", 
+        type: "info" 
+      });
+
+      const formData = new FormData();
+      formData.append('file', savedFile);
+
+      const res = await fetch('https://smartpls-2.onrender.com/upload-csv', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Không thể làm mới session');
+      }
+
+      // Cập nhật session mới
+      setUploadState({
+        fileName: savedFile.name,
+        result: data.summary,
+        savedFile: savedFile, // Giữ lại file trong context
+      });
+      setVariables(data.summary.variables || []);
+      setSavedFile(savedFile); // Cập nhật local state
+      
+      setNotification({ 
+        message: "Session đã được làm mới thành công!", 
+        type: "success" 
+      });
+      
+      return data.summary; // Trả về summary mới với session_id mới
+    } catch (e) {
+      setNotification({ 
+        message: "Không thể làm mới session: " + (e.message || 'Đã xảy ra lỗi'), 
+        type: "error" 
+      });
+      return null;
+    } finally {
+      setIsRefreshingSession(false);
+    }
   };
 
   // Tạo model (PLS hoặc bootstrap)
@@ -135,7 +196,54 @@ export default function AnalysisPage() {
         setNotification({ message: "Mô hình được tạo thành công!", type: "success" });
         setModelResult(data);
       } else {
-        setNotification({ message: "Lỗi backend: " + (data.error || "Không thể tạo mô hình"), type: "error" });
+        // Kiểm tra nếu lỗi là session không tìm thấy
+        const errorMsg = data.error || "Không thể tạo mô hình";
+        if (errorMsg.includes("Session ID") && errorMsg.includes("not found")) {
+          // Tự động refresh session nếu có file đã lưu
+          if (savedFile) {
+            setNotification({ 
+              message: "Session đã hết hạn. Đang tự động làm mới session...", 
+              type: "info" 
+            });
+            const newSummary = await refreshSession();
+            if (newSummary && newSummary.session_id) {
+              // Sau khi refresh thành công, tự động thử lại request với session mới
+              const retryPairs = pairs.map(p => ({
+                independent: Array.isArray(p.independent) ? p.independent : [p.independent],
+                dependent: p.dependent,
+              }));
+              
+              const retryRes = await fetch("https://smartpls-2.onrender.com/create-model", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  pairs: retryPairs,
+                  session_id: newSummary.session_id,
+                  action,
+                }),
+              });
+              
+              const retryData = await retryRes.json();
+              
+              if (retryRes.ok && retryData.status === "success") {
+                setNotification({ message: "Mô hình được tạo thành công!", type: "success" });
+                setModelResult(retryData);
+              } else {
+                setNotification({ message: "Lỗi backend: " + (retryData.error || "Không thể tạo mô hình"), type: "error" });
+              }
+              return;
+            }
+          } else {
+            setNotification({ 
+              message: "Session đã hết hạn. Vui lòng upload lại file CSV!", 
+              type: "error" 
+            });
+          }
+          setPairs([]);
+          setModelResult(null);
+        } else {
+          setNotification({ message: "Lỗi backend: " + errorMsg, type: "error" });
+        }
       }
     } catch (err) {
       setNotification({ message: "Không thể kết nối server.", type: "error" });

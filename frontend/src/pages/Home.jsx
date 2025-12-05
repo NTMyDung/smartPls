@@ -60,6 +60,7 @@ export default function HomePage() {
       setUploadState({
         fileName,
         result: data.summary,
+        savedFile: selectedFile, // Lưu file để có thể upload lại sau
       });
 
       navigate('/phan-tich');
