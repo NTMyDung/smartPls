@@ -78,9 +78,6 @@ export default function LVGroup({ lv, mvs, level, baseX, baseY, onSizeChange, on
           const mvPos = mvPositions[i];
           if (!mvPos) return null;
 
-          const loading = mv.loading.toFixed(3);
-          const pValue = mv.pValue != null ? mv.pValue.toFixed(3) : null;
-
           // vector
           const dx = mvPos.x - lvPos.x;
           const dy = mvPos.y - lvPos.y;
@@ -156,8 +153,7 @@ export default function LVGroup({ lv, mvs, level, baseX, baseY, onSizeChange, on
                   fontSize="12"
                   style={{ userSelect: "none", pointerEvents: "none" }}
                 >
-                   {/* {Number(mv.loading).toFixed(3)} */}
-                   {pValue != null ? `${loading} (${pValue})` : loading}
+                   {Number(mv.loading).toFixed(3)}
                 </text>
               )}
 

@@ -187,9 +187,13 @@ export default function SmartPLSDiagram({ data }) {
         viewBox="0 0 2000 800"
         style={{
           overflow: "visible",
+<<<<<<< HEAD:frontend/src/components/model.jsx
           minHeight: "800",
           width: "110rem",
           height:"fit-content"
+=======
+          minHeight: "1800px",
+>>>>>>> parent of 6b0ed1e (complete):frontend/src/component/model.jsx
         }}
       >
         <defs>
@@ -233,7 +237,6 @@ export default function SmartPLSDiagram({ data }) {
           const perpY = dx / dist;
 
           const coef = path.coefficient.toFixed(3);
-          const pValue = path.pValue != null ? path.pValue.toFixed(3) : null;
 
           const textX = midX + perpX * 5;
           const textY = midY + perpY * 5;
@@ -289,8 +292,7 @@ export default function SmartPLSDiagram({ data }) {
                 fontWeight={selectedPathIndex === i ? "bold" : "normal"}
                 style={{ userSelect: "none", pointerEvents: "none" }}
               >
-                {/* {coef} */}
-                {pValue != null ? `${coef} (${pValue})` : coef}
+                {coef}
               </text>
             </g>
           );

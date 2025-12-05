@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { Routes, Route } from 'react-router-dom';
 import HomePage from './pages/Home.jsx';
 import AnalysisPage from './pages/Analysis.jsx';
@@ -15,4 +16,18 @@ export default function App() {
       </Routes>
     </MainLayout>
   );
+=======
+import { useState, useEffect } from 'react'
+import UploadCSV from "./pages/UploadCSV";
+
+
+function App() {
+  return (
+     <div>
+      <UploadCSV />
+    </div>
+  )
+>>>>>>> parent of 6b0ed1e (complete)
 }
+
+export default App
