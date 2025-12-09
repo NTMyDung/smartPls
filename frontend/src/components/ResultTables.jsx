@@ -1,3 +1,5 @@
+import './ResultTables.css';
+
 export default function ResultTables({
   TABLES_BY_ACTION,
   modelResult,
@@ -42,7 +44,7 @@ export default function ResultTables({
           overflow: "auto"
         }}>
           {selectedTable
-            ? renderTable(modelResult[selectedTable])
+            ? renderTable(modelResult[selectedTable], selectedTable)
             : <p>Chọn loại kết quả bên phải để xem chi tiết.</p>
           }
         </div>

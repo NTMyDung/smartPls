@@ -1,0 +1,10 @@
+.value-accepted {
+  color: #0f9d58;
+  font-weight: 600;
+}
+
+.value-rejected {
+  color: #d93025;
+  font-weight: 600;
+}
+

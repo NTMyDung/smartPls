@@ -313,8 +313,43 @@ export default function AnalysisPage() {
     return { latentVariables, manifestVariables, paths };
   };
 
+  const getValueClass = (tableKey, cellKey, value, rowKey) => {
+    const isNumber = typeof value === "number" && !Number.isNaN(value);
+    const cellLabel = String(cellKey ?? "").toLowerCase();
+    const rowLabel = String(rowKey ?? "").toLowerCase();
+
+    // Outer loading rule: accepted if >= 0.7
+    if (
+      tableKey === "outer_model" &&
+      isNumber &&
+      (cellLabel.includes("loading") || rowLabel.includes("loading"))
+    ) {
+      return value >= 0.7 ? "value-accepted" : "value-rejected";
+    }
+
+    // HTMT matrix: off-diagonal should be < 0.9
+    if (
+      tableKey === "htmt" &&
+      isNumber &&
+      rowKey !== cellKey // avoid diagonal self-comparisons
+    ) {
+      return value < 0.9 ? "value-accepted" : "value-rejected";
+    }
+
+    // VIF tables: accepted if <= 5
+    if (
+      tableKey?.includes("vif") &&
+      isNumber
+    ) {
+      return value <= 5 ? "value-accepted" : "value-rejected";
+    }
+
+    // Default: no special styling
+    return "";
+  };
+
   // RENDER MA TRẬN
-  const renderMatrixTable = (matrix) => {
+  const renderMatrixTable = (matrix, tableKey) => {
     if (!matrix || typeof matrix !== "object") return <p>Không có dữ liệu.</p>;
 
     const rows = Object.keys(matrix);
@@ -344,9 +379,16 @@ export default function AnalysisPage() {
           {rows.map(r => (
             <tr key={r}>
               <td style={{ background: "rgb(160 201 255 / 20%)", color: "black" }}><b>{r}</b></td>
-              {cols.map(c => (
-                <td key={c}>{matrix[r]?.[c] ?? ""}</td>
-              ))}
+              {cols.map(c => {
+                const value = matrix[r]?.[c] ?? "";
+                const cellClass = getValueClass(tableKey, c, value, r);
+
+                return (
+                  <td key={c} className={cellClass}>
+                    {value}
+                  </td>
+                );
+              })}
             </tr>
           ))}
         </tbody>
@@ -355,14 +397,14 @@ export default function AnalysisPage() {
   };
 
   // RENDER TABLE KEY-VALUE
-  const renderTable = (obj) => {
+  const renderTable = (obj, tableKey) => {
     if (!obj) return <p></p>;
 
     const isMatrix =
       typeof obj === "object" &&
       Object.values(obj).every(v => typeof v === "object");
 
-    if (isMatrix) return renderMatrixTable(obj);
+    if (isMatrix) return renderMatrixTable(obj, tableKey);
 
     return (
       <table
@@ -385,7 +427,7 @@ export default function AnalysisPage() {
           {Object.entries(obj).map(([k, v]) => (
             <tr key={k}>
               <td style={{ fontWeight: "bold" }}>{k}</td>
-              <td>
+                <td className={getValueClass(tableKey, k, v, k)}>
                 {typeof v === "object"
                   ? (
                     <pre style={{ whiteSpace: "pre-wrap" }}>
