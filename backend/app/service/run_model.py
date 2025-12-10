@@ -112,6 +112,7 @@ def run_pls_analysis(data_df: pd.DataFrame, config: Config, structure: Structure
         "fornell_larcker": pls.fornell_larcker().to_dict(),
         "outer_vif": pls.outer_vif().to_dict(),
         "inner_vif": pls.inner_vif().to_dict(),
+        "ca_cr": pls.unidimensionality().to_dict()
     }
 
     return round_floats(result)

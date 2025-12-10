@@ -38,6 +38,7 @@ export default function AnalysisPage() {
       { key: "fornell_larcker", label: "Fornell–Larcker (Matrix)" },
       { key: "outer_vif", label: "Outer VIF" },
       { key: "inner_vif", label: "Inner VIF" },
+      { key: "ca_cr", label: "Cronbach’s Alpha & Composite Reliability" },
     ],
     bootstrap: [
       { key: "path_coefficients", label: "Path Coefficients" },
