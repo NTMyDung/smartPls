@@ -96,6 +96,12 @@ def run_pls_analysis(data_df: pd.DataFrame, config: Config, structure: Structure
 
     path_coeffs = pls.path_coefficients().to_dict()
     lv_levels = assign_layers(path_coeffs)
+    df = pls.unidimensionality()
+    print("[DEBUG] DataFrame ca_cr:")
+    print(df)  # Xem DataFrame thật
+    print("[DEBUG] ca_cr.to_dict():")
+    print(df.to_dict(orient="records"))  # Xem dạng list of dict dễ đọc
+
 
     # print_treated_data(config, data_df)
     
@@ -112,6 +118,7 @@ def run_pls_analysis(data_df: pd.DataFrame, config: Config, structure: Structure
         "fornell_larcker": pls.fornell_larcker().to_dict(),
         "outer_vif": pls.outer_vif().to_dict(),
         "inner_vif": pls.inner_vif().to_dict(),
+        "ca_cr": pls.unidimensionality().to_dict(),
     }
 
     return round_floats(result)

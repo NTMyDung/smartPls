@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useUpload } from '../context/UploadContext.jsx';
 import Variable from '../components/Variable.jsx';
@@ -38,6 +39,7 @@ export default function AnalysisPage() {
       { key: "fornell_larcker", label: "Fornell–Larcker (Matrix)" },
       { key: "outer_vif", label: "Outer VIF" },
       { key: "inner_vif", label: "Inner VIF" },
+      { key: "ca_cr", label: "Cronbach’s Alpha & Composite Reliability" },
     ],
     bootstrap: [
       { key: "path_coefficients", label: "Path Coefficients" },
@@ -46,6 +48,12 @@ export default function AnalysisPage() {
       { key: "bootstrap_loading", label: "Bootstrap Loading" },
     ],
   };
+
+  useEffect(() => {
+    if (modelResult) {
+      console.log("modelResult updated:", modelResult);
+    }
+  }, [modelResult]); 
 
   if (!result) {
     navigate('/');
@@ -73,11 +81,16 @@ export default function AnalysisPage() {
         const formData = new FormData();
         formData.append('file', file);
 
-        const res = await fetch('https://smartpls-2.onrender.com/upload-csv', {
+        // const res = await fetch('https://smartpls-2.onrender.com/upload-csv', {
+        //   method: 'POST',
+        //   body: formData,
+        // });
+
+        const res = await fetch('http://127.0.0.1:8000/upload-csv', {
           method: 'POST',
           body: formData,
         });
-
+        
         const data = await res.json();
 
         if (!res.ok || data.error) {
@@ -122,7 +135,11 @@ export default function AnalysisPage() {
       const formData = new FormData();
       formData.append('file', savedFile);
 
-      const res = await fetch('https://smartpls-2.onrender.com/upload-csv', {
+      // const res = await fetch('https://smartpls-2.onrender.com/upload-csv', {
+      //   method: 'POST',
+      //   body: formData,
+      // });
+      const res = await fetch('http://127.0.0.1:8000/upload-csv', {
         method: 'POST',
         body: formData,
       });
@@ -180,7 +197,17 @@ export default function AnalysisPage() {
         dependent: p.dependent,
       }));
 
-      const res = await fetch("https://smartpls-2.onrender.com/create-model", {
+      // const res = await fetch("https://smartpls-2.onrender.com/create-model", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify({
+      //     pairs: pairsForBackend,
+      //     session_id: result.session_id,
+      //     action,
+      //   }),
+      // });
+
+      const res = await fetch("http://127.0.0.1:8000/create-model", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -213,7 +240,16 @@ export default function AnalysisPage() {
                 dependent: p.dependent,
               }));
               
-              const retryRes = await fetch("https://smartpls-2.onrender.com/create-model", {
+              // const retryRes = await fetch("https://smartpls-2.onrender.com/create-model", {
+              //   method: "POST",
+              //   headers: { "Content-Type": "application/json" },
+              //   body: JSON.stringify({
+              //     pairs: retryPairs,
+              //     session_id: newSummary.session_id,
+              //     action,
+              //   }),
+              // });
+              const retryRes = await fetch("http://127.0.0.1:8000/create-model", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -222,6 +258,7 @@ export default function AnalysisPage() {
                   action,
                 }),
               });
+              
               
               const retryData = await retryRes.json();
               

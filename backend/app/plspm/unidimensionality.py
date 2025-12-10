@@ -18,15 +18,16 @@ class Unidimensionality:
         """
         Thực hiện phân tích thành phần chính (PCA) để tính các chỉ số độ tin cậy:
         - Cronbach's alpha: độ tin cậy nội tại
-        - Dillon-Goldstein's rho: độ tin cậy tổng hợp
+        - Composite Reliability: độ tin cậy tổng hợp
         - Eigenvalue thành phần chính thứ nhất/thứ hai
         """
         summary = pd.DataFrame({"mode":                 pd.Series(dtype="str"),
                                 "mvs":                  pd.Series(dtype="float"),
                                 "cronbach_alpha":       pd.Series(dtype="float"),
-                                "dillon_goldstein_rho": pd.Series(dtype="float"),
+                                # "composite_reliability ": pd.Series(dtype="float"),
                                 "eig_1st":              pd.Series(dtype="float"),
-                                "eig_2nd":              pd.Series(dtype="float")},
+                                "eig_2nd":              pd.Series(dtype="float")
+                                },
                                  index=list(self.__config.path()))
         for lv in list(self.__config.path()):
             mvs = len(self.__config.mvs(lv))
@@ -51,5 +52,5 @@ class Unidimensionality:
                     corr = np.corrcoef(np.column_stack((pca_input.values, pca_scores[:,0])), rowvar=False)[:,-1][:-1]
                     rho_numerator = sum(corr) ** 2
                     rho_denominator = rho_numerator + (mvs - np.sum(np.power(corr, 2)))
-                    summary.loc[lv, "dillon_goldstein_rho"] = rho_numerator / rho_denominator
+                    summary.loc[lv, "composite_reliability"] = rho_numerator / rho_denominator
         return summary
