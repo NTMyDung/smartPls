@@ -29,6 +29,7 @@ origins = [
     "http://127.0.0.1:3000",
     "https://pls-dn.netlify.app"
     "https://smart-pls.vercel.app"
+    "https://smart-pls.vercel.app/"
 ]
 
 app.add_middleware(
