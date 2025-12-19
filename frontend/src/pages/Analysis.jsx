@@ -74,7 +74,9 @@ export default function AnalysisPage() {
         const formData = new FormData();
         formData.append('file', file);
 
-        const res = await fetch('https://smartpls-2.onrender.com/upload-csv', {
+        //const res = await fetch('https://smartpls-2.onrender.com/upload-csv', {
+        const res = await fetch('http://127.0.0.1:8000/upload-csv', {
+
           method: 'POST',
           body: formData,
         });
@@ -123,7 +125,8 @@ export default function AnalysisPage() {
       const formData = new FormData();
       formData.append('file', savedFile);
 
-      const res = await fetch('https://smartpls-2.onrender.com/upload-csv', {
+      //const res = await fetch('https://smartpls-2.onrender.com/upload-csv', {
+      const res = await fetch('http://127.0.0.1:8000/upload-csv', {
         method: 'POST',
         body: formData,
       });
@@ -181,7 +184,8 @@ export default function AnalysisPage() {
         dependent: p.dependent,
       }));
 
-      const res = await fetch("https://smartpls-2.onrender.com/create-model", {
+      //const res = await fetch("https://smartpls-2.onrender.com/create-model", {
+      const res = await fetch("http://127.0.0.1:8000/create-model", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -200,7 +204,8 @@ export default function AnalysisPage() {
         // Kiểm tra nếu lỗi là session không tìm thấy
         const errorMsg = data.error || "Không thể tạo mô hình";
         if (errorMsg.includes("Session ID") && errorMsg.includes("not found")) {
-          // Tự động refresh session nếu có file đã lưu
+          // Tự động refresh session nếu có file đã lưu,
+          // nhưng KHÔNG gọi lại /create-model để tránh gọi API 2 lần cho 1 lần bấm nút
           if (savedFile) {
             setNotification({ 
               message: "Session đã hết hạn. Đang tự động làm mới session...", 
@@ -208,31 +213,10 @@ export default function AnalysisPage() {
             });
             const newSummary = await refreshSession();
             if (newSummary && newSummary.session_id) {
-              // Sau khi refresh thành công, tự động thử lại request với session mới
-              const retryPairs = pairs.map(p => ({
-                independent: Array.isArray(p.independent) ? p.independent : [p.independent],
-                dependent: p.dependent,
-              }));
-              
-              const retryRes = await fetch("https://smartpls-2.onrender.com/create-model", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  pairs: retryPairs,
-                  session_id: newSummary.session_id,
-                  action,
-                }),
+              setNotification({ 
+                message: "Session đã được làm mới. Vui lòng bấm chạy lại mô hình.", 
+                type: "info" 
               });
-              
-              const retryData = await retryRes.json();
-              
-              if (retryRes.ok && retryData.status === "success") {
-                setNotification({ message: "Mô hình được tạo thành công!", type: "success" });
-                setModelResult(retryData);
-              } else {
-                setNotification({ message: "Lỗi backend: " + (retryData.error || "Không thể tạo mô hình"), type: "error" });
-              }
-              return;
             }
           } else {
             setNotification({ 

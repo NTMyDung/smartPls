@@ -4,7 +4,8 @@ export default function BootstrapProgress({ sessionId }) {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const es = new EventSource(`https://smartpls-2.onrender.com/bootstrap-progress/${sessionId}`);
+    //const es = new EventSource(`https://smartpls-2.onrender.com/bootstrap-progress/${sessionId}`);
+    const es = new EventSource(`http://localhost:8000/bootstrap-progress/${sessionId}`);
 
     es.onmessage = (e) => {
       if (e.data === "done") {
