@@ -74,8 +74,8 @@ export default function AnalysisPage() {
         const formData = new FormData();
         formData.append('file', file);
 
-        //const res = await fetch('https://smartpls-2.onrender.com/upload-csv', {
-        const res = await fetch('http://127.0.0.1:8000/upload-csv', {
+        const res = await fetch('https://smartpls-2.onrender.com/upload-csv', {
+        //const res = await fetch('http://127.0.0.1:8000/upload-csv', {
 
           method: 'POST',
           body: formData,
@@ -125,8 +125,8 @@ export default function AnalysisPage() {
       const formData = new FormData();
       formData.append('file', savedFile);
 
-      //const res = await fetch('https://smartpls-2.onrender.com/upload-csv', {
-      const res = await fetch('http://127.0.0.1:8000/upload-csv', {
+      const res = await fetch('https://smartpls-2.onrender.com/upload-csv', {
+      //const res = await fetch('http://127.0.0.1:8000/upload-csv', {
         method: 'POST',
         body: formData,
       });
@@ -184,8 +184,8 @@ export default function AnalysisPage() {
         dependent: p.dependent,
       }));
 
-      //const res = await fetch("https://smartpls-2.onrender.com/create-model", {
-      const res = await fetch("http://127.0.0.1:8000/create-model", {
+      const res = await fetch("https://smartpls-2.onrender.com/create-model", {
+      //const res = await fetch("http://127.0.0.1:8000/create-model", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
