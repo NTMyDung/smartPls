@@ -11,6 +11,8 @@ Frontend: cd frontend -> npm run dev
 /workspace
 ├─ backend
 │  ├─ app
+│  │  ├──plspm (init.py, plsm.py, config.py, bootstrap.py, inner_model.py,....)
+│  │  ├──service (csv_service.py, run_model.py)
 │  │  └─ main.py
 │  └─ requirements.txt
 ├─ frontend
@@ -23,9 +25,9 @@ Frontend: cd frontend -> npm run dev
 │     └─ App.jsx
 
 
-## Backend (Flask)
-- Framework: Flask + Gunicorn
-- CORS bật cho đường dẫn `/api/*`
+## Backend (Python)
+- Framework: Fast API
+- CORS 
 
 
 ## Frontend (React + Vite)

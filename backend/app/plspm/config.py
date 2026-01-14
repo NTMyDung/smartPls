@@ -22,16 +22,15 @@ class Structure:
                 self.add_path([my_path[0]], [my_path[1]])
 
     def add_path(self, source: list, target: list):
-        # Thêm một hoặc nhiều đường dẫn giữa các biến tiềm ẩn
         """
         Thêm một hoặc nhiều đường dẫn giữa các biến tiềm ẩn.
         - source: danh sách biến tiềm ẩn nguồn
         - target: danh sách biến tiềm ẩn đích
         """
         if len(source) != 1 and len(target) != 1:
-            raise ValueError("Either source or target must be a list containing a single entry")
+            raise ValueError("Nguồn hoặc đích phải là danh sách chứa đúng một phần tử")
         if len(source) == 0 or len(target) == 0:
-            raise ValueError("Both source and target must contain at least one entry")
+            raise ValueError("Cả nguồn và đích phải chứa ít nhất một phần tử")
         for element in it.product(source, target):
             self.__toposort.append(element[0], element[1])
 
@@ -41,7 +40,7 @@ class Structure:
         Trả về ma trận đường dẫn (DataFrame) giữa các biến tiềm ẩn.
         - Dùng để truyền vào Config khi khởi tạo mô hình.
         """
-        index = self.__toposort.order()
+        index = self.__toposort.order() # Lấy thứ tự topo của các biến
         path = pd.DataFrame(np.zeros((len(index), len(index)), int), columns=index, index=index)
         for source, target in self.__toposort.elements():
             path.at[target, source] = 1
@@ -81,30 +80,30 @@ class Config:
     def __init__(self, path: pd.DataFrame, scaled: bool = True, default_scale: Scale = None):
         # Khởi tạo cấu hình với ma trận đường dẫn, chế độ chuẩn hóa, kiểu đo lường mặc định
         # Khởi tạo với ma trận đường dẫn, chế độ chuẩn hóa, kiểu đo lường mặc định
-        self.__modes = {}   # Lưu chế độ đo lường cho từng latent variable
-        self.__mvs = {}     # Lưu danh sách manifest variable cho từng latent variable
-        self.__hoc = {}     # Lưu cấu trúc higher-order construct nếu có
-        self.__dummies = {}
-        self.__mv_scales = {}
-        self.__scaled = scaled
-        self.__metric = True
-        self.__default_scale = default_scale
-        self.__missing = False
+        self.__modes = {}       # Lưu chế độ đo lường cho từng latent variable
+        self.__mvs = {}         # Lưu danh sách manifest variable cho từng latent variable
+        self.__hoc = {}         # Lưu cấu trúc higher-order construct nếu có
+        self.__dummies = {}     # Lưu các ma trận giả (dummy) cho MV định tính
+        self.__mv_scales = {}   # Kiểu đo lường của từng MV
+        self.__scaled = scaled  # True nếu dữ liệu chuẩn hóa
+        self.__metric = True    # True nếu dữ liệu metric
+        self.__default_scale = default_scale    # Kiểu đo mặc định
+        self.__missing = False  # True nếu dữ liệu có missing value
         if not isinstance(path, pd.DataFrame):
-            raise TypeError("Path argument must be a Pandas DataFrame")
+            raise TypeError("Đối số path phải là một Pandas DataFrame")
         path_shape = path.shape
         if path_shape[0] != path_shape[1]:
-            raise ValueError("Path argument must be a square matrix")
+            raise ValueError("Ma trận đường dẫn phải là ma trận vuông")
         try:
             npt.assert_array_equal(path, np.tril(path))
         except:
-            raise ValueError("Path argument must be a lower triangular matrix")
+            raise ValueError("Ma trận đường dẫn phải là lower triangular (tam giác dưới)")
         if not path.isin([0, 1]).all(axis=None):
-            raise ValueError("Path matrix element values may only be in [0, 1]")
+            raise ValueError("Các phần tử trong ma trận đường dẫn chỉ có thể là 0 hoặc 1")
         try:
             npt.assert_array_equal(path.columns.values, path.index.values)
         except:
-            raise ValueError("Path matrix must have matching row and column index names")
+            raise ValueError("Tên hàng và cột của ma trận đường dẫn phải giống nhau")
         self.__path = path
 
     def clone(self):
@@ -161,7 +160,6 @@ class Config:
         return self.__dummies[mv]
 
     def add_lv(self, lv_name: str, mode: Mode, *mvs: MV):
-        # Thêm biến tiềm ẩn và các biến quan sát vào mô hình
         """
         Thêm một biến tiềm ẩn (latent variable) và các biến quan sát liên kết vào mô hình.
 
@@ -173,14 +171,14 @@ class Config:
         assert mode in Mode
         hoc_lvs = [item for lvs in self.__hoc.values() for item in lvs]
         if lv_name not in self.__path and lv_name not in hoc_lvs:
-            raise ValueError("Latent variable " + lv_name + " is not listed in the outer model paths or higher order constructs.")
+            raise ValueError("Biến tiềm ẩn " + lv_name + "không có trong ma trận đường dẫn hoặc cấu trúc HOC")
         self.__modes[lv_name] = mode
         self.__mvs[lv_name] = []
         for mv in mvs:
             if mv.name() in self.__mv_scales:
-                raise ValueError("You can only specify a column once. You can specify a higher order construct with `add_higher_order(...)`")
+                raise ValueError("Bạn chỉ được định nghĩa một lần cho mỗi cột dữ liệu. Với HOC, dùng `add_higher_order(...)`")
             if mv.name() in list(self.__path):
-                raise ValueError("You cannot specify MVs with the same name as LVs.")
+                raise ValueError("Tên MV không được trùng với tên LV")
             self.__mvs[lv_name].append(mv.name())
             scale = self.__default_scale if mv.scale() is None else mv.scale()
             self.__mv_scales[mv.name()] = scale
@@ -211,7 +209,7 @@ class Config:
         # TODO: Warn if centroid scheme is used with HOC.
         assert mode in Mode
         if hoc_name not in self.__path:
-            raise ValueError("Path matrix does not contain reference to higher order construct " + hoc_name)
+            raise ValueError("Ma trận đường dẫn không chứa higher order construct " + hoc_name)
         self.__modes[hoc_name] = mode
         self.__hoc[hoc_name] = lvs
 
@@ -231,7 +229,7 @@ class Config:
         names = filter(lambda x: x.startswith(col_name_starts_with), list(data))
         mvs = list(map(lambda mv: MV(mv, default_scale), names))
         if len(mvs) == 0:
-            raise ValueError("No columns were found in the data starting with " + col_name_starts_with)
+            raise ValueError("Không tìm thấy cột nào trong dữ liệu bắt đầu bằng " + col_name_starts_with)
         self.add_lv(lv_name, mode, *mvs)
 
     def filter(self, data: pd.DataFrame) -> pd.DataFrame:
@@ -250,20 +248,24 @@ class Config:
         """
         hoc_lvs = [item for lvs in self.__hoc.values() for item in lvs]
         path_lvs = filter(lambda i: i not in self.__hoc.keys(), list(self.path()) + hoc_lvs)
+        
         if set(self.__mvs.keys()) != set(path_lvs):
             raise ValueError(
-                "The Path matrix supplied does not specify the same latent variables as you added when configuring manifest variables." +
+                "Ma trận đường dẫn không khớp với các biến tiềm ẩn bạn đã thêm." +
                 " Path: " + ", ".join(path_lvs) + " LVs: " + ", ".join(set(self.__mvs.keys())))
+        
         if not set(self.__mv_scales.keys()).issubset(set(data)):
             raise ValueError(
-                "The following manifest variables you configured are not present in the data set: " + ", ".join(
+                "Các biến quan sát đã cấu hình không có trong dữ liệu: " + ", ".join(
                     set(self.__mv_scales.keys()).difference(set(data))))
         data = data[list(self.__mv_scales.keys())]
+        
         if False in data.apply(lambda x: np.issubdtype(x.dtype, np.number)).values:
             raise ValueError(
-                "Data must only contain numeric values. Please convert any categorical data into numerical values.")
+                "Dữ liệu chỉ được chứa giá trị số. Vui lòng chuyển đổi dữ liệu định tính sang số.")
         self.__missing = data.isnull().values.any()
-        # Delete any rows which has all MVs for an LV as NaN
+        
+        # Nếu tất cả MV của LV đều NaN => đánh dấu xóa
         if self.__missing:
             mv_grouped_by_lv = {}
             rows_to_delete = set()
@@ -299,7 +301,7 @@ class Config:
                 return util.treat(metric_data, scale=True)
         else:
             if None in self.__mv_scales.values():
-                raise TypeError("If you supply a scale for any MV, you must either supply a scale for all of them or specify a default scale.")
+                raise TypeError("Nếu bạn chỉ định kiểu đo lường cho bất kỳ biến quan sát (MV) nào, bạn phải chỉ định kiểu đo lường cho tất cả các biến quan sát hoặc phải cung cấp một kiểu đo lường mặc định.")
             if set(self.__mv_scales.values()) == {Scale.RAW}:
                 self.__scaled = False
             if set(self.__mv_scales.values()) == {Scale.RAW, Scale.NUM}:
