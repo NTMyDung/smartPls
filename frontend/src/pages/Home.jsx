@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './Home.css';
 import { useUpload } from '../context/UploadContext.jsx';
 import bg from '../assets/bg.png';
@@ -118,9 +118,9 @@ export default function HomePage() {
                 )}
               </div>
 
-              <a href="/huong-dan-su-dung" className="guide-link">
+              <Link to="/huong-dan-su-dung" className="guide-link">
                 Hướng dẫn tạo file dữ liệu
-              </a>
+              </Link>
             </div>
 
             <div className="analyze-section">
